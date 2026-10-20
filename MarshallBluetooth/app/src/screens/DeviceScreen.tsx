@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform } from 'react-native';
 
 import { SpeakerPanel } from '../components/SpeakerPanel';
 import { SpeakerSwitcher } from '../components/SpeakerSwitcher';
@@ -28,12 +29,24 @@ export const WIDGET_PUBLISH_DELAY_MS = 250;
  */
 export const SEARCH_TIMEOUT_MS = 20000;
 
-const BLUETOOTH_HINTS: Partial<Record<BluetoothState, string>> = {
-  poweredOff: 'Bluetooth is off. Turn it on in Control Center to find your speaker.',
-  unauthorized:
-    'Marshall Bluetooth may not use Bluetooth. Allow it in System Settings › Privacy & Security › Bluetooth.',
-  unsupported: 'This Mac does not support Bluetooth Low Energy.',
-};
+// The same screen runs on Windows and Linux through react-native-web, where
+// the macOS places these hints name do not exist.
+const BLUETOOTH_HINTS: Partial<Record<BluetoothState, string>> = Platform.select({
+  macos: {
+    poweredOff: 'Bluetooth is off. Turn it on in Control Center to find your speaker.',
+    unauthorized:
+      'Marshall Bluetooth may not use Bluetooth. Allow it in System Settings › Privacy & Security › Bluetooth.',
+    unsupported: 'This Mac does not support Bluetooth Low Energy.',
+  },
+  default: {
+    poweredOff: 'Bluetooth is off or no adapter was found. Turn it on in your system settings to find your speaker.',
+    unauthorized: 'Roadie may not use Bluetooth. Allow it in your system settings.',
+    unsupported: 'This computer does not support Bluetooth Low Energy.',
+  },
+});
+
+/** Where the selected speaker also shows: the desktop widget on macOS, the tray elsewhere. */
+const MIRROR = Platform.select({ macos: 'the desktop widget', default: 'the tray menu' });
 
 /**
  * The window: the Marshall speakers in range and the selected one's controls.
@@ -117,7 +130,7 @@ export function DeviceScreen(): React.JSX.Element {
     const timer = setTimeout(() => {
       publishToWidget(JSON.parse(widgetKey) as WidgetPayload)
         .then(() =>
-          setWidgetNote(`Shown on the desktop widget · updated ${new Date().toLocaleTimeString()}`),
+          setWidgetNote(`Shown on ${MIRROR} · updated ${new Date().toLocaleTimeString()}`),
         )
         .catch((error: unknown) =>
           setStatus(error instanceof Error ? error.message : String(error)),

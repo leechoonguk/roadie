@@ -1,10 +1,13 @@
 .PHONY: help install pods start run build relaunch app-logs typecheck lint test swift-check swift-test ble-probe app-icon verify clean commit push \
+	desktop-install desktop-build desktop-start desktop-typecheck desktop-dist \
 	dist release unrelease \
 	check-app-duplicate-blocks check-app-macos-project check-app-native-boundary check-code-layout check-makefiles \
 	check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling check-verify
 
 APP := app
 MACOS := $(APP)/macos
+# The Windows/Linux app: Electron over the same React screens (react-native-web).
+DESKTOP := $(APP)/desktop
 SCHEME := MarshallBluetooth-macOS
 WORKSPACE := $(MACOS)/MarshallBluetooth.xcworkspace
 # The product the app target builds (its PRODUCT_NAME), and where Xcode put it.
@@ -81,6 +84,23 @@ ble-probe: ## Drive the BLE core against a real speaker from the terminal (ARGS=
 
 app-icon: ## Render the app icon into the asset catalog from its Swift drawing (CoreTests/Icon)
 	swift run --package-path $(MACOS)/CoreTests roadie-icon $(MACOS)/MarshallBluetooth-macOS/Assets.xcassets/AppIcon.appiconset
+
+# Windows and Linux (rule://root-makefile). Electron and electron-builder run on
+# any OS, but an installer is built for the OS it runs on — CI builds both.
+desktop-install: ## Install the Windows/Linux desktop app's dependencies (npm ci in app/desktop)
+	cd $(DESKTOP) && npm ci
+
+desktop-build: ## Bundle the Windows/Linux desktop app (main, preload, window) into app/desktop/out
+	node app/desktop/build.ts
+
+desktop-start: desktop-build ## Run the desktop app from its bundle (Windows/Linux; on macOS use `make run`)
+	cd $(DESKTOP) && npx electron .
+
+desktop-typecheck: ## Type-check the desktop app against DOM, Node and Web Bluetooth types
+	cd $(DESKTOP) && npx tsc --noEmit -p tsconfig.json
+
+desktop-dist: desktop-build ## Package this OS's installers into app/desktop/release (usage: make desktop-dist v=x.y.z)
+	cd $(DESKTOP) && npx electron-builder --publish never $(if $(v),-c.extraMetadata.version=$(v))
 
 verify: lint typecheck test swift-check swift-test check-app-duplicate-blocks check-app-macos-project check-app-native-boundary check-code-layout check-makefiles check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling ## Run every gate that runs without Xcode
 

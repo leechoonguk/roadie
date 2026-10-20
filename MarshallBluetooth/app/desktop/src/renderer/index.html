@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!-- react-native-web writes its styles into a <style> element, hence 'unsafe-inline' for styles only. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>Roadie</title>
+    <style>
+      :root {
+        --label: #1d1d1f;
+        --secondary-label: #6e6e73;
+        --tertiary-label: #aeaeb2;
+        --track: #d1d1d6;
+        --accent: #0a64d8;
+        --separator: #d2d2d7;
+        --window: #f5f5f7;
+        --sidebar: #ececee;
+        --card: #ffffff;
+        --selection: #0a64d8;
+        --selected-text: #ffffff;
+        --error: #d70015;
+        --connected: #248a3d;
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --label: #f5f5f7;
+          --secondary-label: #a1a1a6;
+          --tertiary-label: #636366;
+          --track: #48484a;
+          --accent: #3b8cff;
+          --separator: #3a3a3c;
+          --window: #1c1c1e;
+          --sidebar: #2c2c2e;
+          --card: #2c2c2e;
+          --selection: #3b8cff;
+          --selected-text: #ffffff;
+          --error: #ff453a;
+          --connected: #30d158;
+        }
+      }
+      html,
+      body,
+      #root {
+        height: 100%;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--window);
+        font-family: system-ui, 'Segoe UI', Ubuntu, Cantarell, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="renderer.js"></script>
+  </body>
+</html>

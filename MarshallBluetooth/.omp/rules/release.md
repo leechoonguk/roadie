@@ -66,6 +66,12 @@ current version.
    release with `Roadie.zip`, `appcast.xml` and `checksums.txt`, and verifies
    both the attached assets and that `releases/latest/download/appcast.xml` now
    names the new version.
+5. Publishing the release starts `.github/workflows/desktop.yml`, which builds
+   the Windows and Linux app (`app/desktop`, `make desktop-dist`) on GitHub's
+   runners and attaches `Roadie-<version>-windows-setup.exe`, `…-linux-x86_64.AppImage`
+   and `…-linux-amd64.deb` to the same release a few minutes later. Those
+   installers are unsigned and carry no Apple key, so CI may build them; it only
+   adds assets and never touches the three above.
 
 ## When It Fails
 
