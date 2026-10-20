@@ -1,0 +1,41 @@
+# Project-local OMP settings.
+# See `omp://settings.md` for the full catalog and precedence rules.
+
+modelRoles:
+  default: omlx/Qwen3.6-35B-A3B-5bit
+
+bashInterceptor:
+  enabled: true
+
+# ── Post hooks: disabled per tool call, run once as the closing gate ──────────
+#
+# Every file in .omp/hooks/post/ is also a `check-*` prerequisite of the root
+# `make verify`, so the same checks reach the tree once at commit time
+# (`make commit`/`make push` depend on verify) instead of after every mutating
+# tool call. Measured in the reference harness this was ported from: post hooks
+# cost 3.8s per mutating call against one ~52s gate run, a break-even of 14
+# calls in sessions that average ~150.
+#
+# Only automatic execution is switched off. The files, the make targets and the
+# closing gate stay:
+#   - pre/strict-* hooks stay loaded (they *block* destructive calls, which no
+#     after-the-fact check can undo)
+#   - the continuity extension refuses a finish with no unit verification after
+#     the last change; the full gate runs on the commit path
+#
+# The id format is `hook:<type>:<tool>:<name>` (omp://extension-loading.md, the
+# hook capability's toExtensionId). The array replaces, never extends, the
+# global setting.
+disabledExtensions:
+  - hook:post:check-app-duplicate-blocks:check-app-duplicate-blocks.ts
+  - hook:post:check-app-macos-project:check-app-macos-project.ts
+  - hook:post:check-app-native-boundary:check-app-native-boundary.ts
+  - hook:post:check-code-layout:check-code-layout.ts
+  - hook:post:check-makefiles:check-makefiles.ts
+  - hook:post:check-omp-hooks:check-omp-hooks.ts
+  - hook:post:check-omp-rules:check-omp-rules.ts
+  - hook:post:check-omp-skills:check-omp-skills.ts
+  - hook:post:check-omp-types:check-omp-types.ts
+  - hook:post:check-release:check-release.ts
+  - hook:post:check-tooling:check-tooling.ts
+  - hook:post:check-verify:check-verify.ts

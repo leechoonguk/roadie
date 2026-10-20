@@ -1,0 +1,9 @@
+{
+  "idleTimeoutMs": 300000,
+  "servers": {
+    "sourcekit-lsp": {
+      "command": "/Library/Developer/CommandLineTools/usr/bin/sourcekit-lsp",
+      "rootMarkers": ["app/macos/Podfile"]
+    }
+  }
+}

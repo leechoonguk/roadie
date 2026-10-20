@@ -1,0 +1,703 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0A1B4B54CEFA6C83782D49D3 /* WidgetBridgeModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD938B004FA489DC1A543FE9 /* WidgetBridgeModule.swift */; };
+		3440615BA910084BADEB134A /* libPods-MarshallBluetooth-macOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 66A09578258D12F209E3E6FE /* libPods-MarshallBluetooth-macOS.a */; };
+		3E5B7C21A94D60F8B2C1D4E7 /* MarshallProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2A9D3C1B8E45A6C0D9E8F1 /* MarshallProtocol.swift */; };
+		422752AB5B463555C71F2F95 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77AC963C6E70B6C430D21592 /* PrivacyInfo.xcprivacy */; };
+		4C9D2E7F1A3B5C6D8E0F2A1B /* StatusItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D1E3F2A4B5C6D7E9F0A1B2C /* StatusItemController.swift */; };
+		5142014D2437B4B30078DB4F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5142014C2437B4B30078DB4F /* AppDelegate.swift */; };
+		514201522437B4B40078DB4F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 514201512437B4B40078DB4F /* Assets.xcassets */; };
+		5A7E8FE31C58693533CCBA01 /* MarshallWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1F1C4E2EEBD6BAEDB899E13F /* MarshallWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		6D69461968676235657D707F /* DeviceSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */; };
+		7302BAB41325B3097FA9AB05 /* DeviceSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */; };
+		96BC0D3039E43968020AEF77 /* WidgetBridgeModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 062545A918472A4E4E800A52 /* WidgetBridgeModule.m */; };
+		9ACA374CB61AF5C9B36498BA /* MarshallBleModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13C5468807D0F2253B6D5866 /* MarshallBleModule.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* ControlRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E1D2C3B4A5968778695A4B /* ControlRequest.swift */; };
+		B00A0ADA174AACB0CF2B9D72 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 234237712E4DA390D02FB3CD /* Cocoa.framework */; };
+		B2C3D4E5F60718293A4B5C6D /* ControlRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E1D2C3B4A5968778695A4B /* ControlRequest.swift */; };
+		BCD8B4BAE4364490844909F8 /* MarshallWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020BC345AF137B42A5B25 /* MarshallWidget.swift */; };
+		C3D4E5F60718293A4B5C6D7E /* ControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F2A3B4C5D6E7F8091A2B3C /* ControlIntents.swift */; };
+		D4E5F60718293A4B5C6D7E8F /* ControlRequestRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E3F4A5B6C7D8E9F0A1B2C3 /* ControlRequestRelay.swift */; };
+		D8AE45576FF34B8F6CC4C87C /* MarshallBleModule.m in Sources */ = {isa = PBXBuildFile; fileRef = DFA8C8C4218045FD6DD9B62C /* MarshallBleModule.m */; };
+		DEC7E4C9B249EDAF9674C29D /* MarshallScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5A6400A85563AF77FB300A1 /* MarshallScanner.swift */; };
+		E195981E0D15B3081AC2903E /* WidgetPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C7C8B948664A11654E8B00 /* WidgetPublisher.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0C0376E5C74696BEB43FE23F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E9DB740F07D7334B97DE475E;
+			remoteInfo = MarshallWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		FDAB23A6F231609F5466123F /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				5A7E8FE31C58693533CCBA01 /* MarshallWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		062545A918472A4E4E800A52 /* WidgetBridgeModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WidgetBridgeModule.m; sourceTree = "<group>"; };
+		13C5468807D0F2253B6D5866 /* MarshallBleModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarshallBleModule.swift; sourceTree = "<group>"; };
+		163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DeviceSnapshot.swift; sourceTree = "<group>"; };
+		1F1C4E2EEBD6BAEDB899E13F /* MarshallWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MarshallWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		234237712E4DA390D02FB3CD /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		514201492437B4B30078DB4F /* MarshallBluetooth.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MarshallBluetooth.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5142014C2437B4B30078DB4F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		514201512437B4B40078DB4F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		514201562437B4B40078DB4F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		514201592437B4B40078DB4F /* MarshallBluetooth.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MarshallBluetooth.entitlements; sourceTree = "<group>"; };
+		59C7C8B948664A11654E8B00 /* WidgetPublisher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetPublisher.swift; sourceTree = "<group>"; };
+		5B3BE93941EFB0EC58ACD3FF /* Pods-MarshallBluetooth-macOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MarshallBluetooth-macOS.debug.xcconfig"; path = "Target Support Files/Pods-MarshallBluetooth-macOS/Pods-MarshallBluetooth-macOS.debug.xcconfig"; sourceTree = "<group>"; };
+		66A09578258D12F209E3E6FE /* libPods-MarshallBluetooth-macOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-MarshallBluetooth-macOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		77AC963C6E70B6C430D21592 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = ../PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		7F2A9D3C1B8E45A6C0D9E8F1 /* MarshallProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarshallProtocol.swift; sourceTree = "<group>"; };
+		8D1E3F2A4B5C6D7E9F0A1B2C /* StatusItemController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
+		96AD926971B33897305AAC85 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9C9BD6B152A52DD54600FEA9 /* Pods-MarshallBluetooth-macOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MarshallBluetooth-macOS.release.xcconfig"; path = "Target Support Files/Pods-MarshallBluetooth-macOS/Pods-MarshallBluetooth-macOS.release.xcconfig"; sourceTree = "<group>"; };
+		A5A6400A85563AF77FB300A1 /* MarshallScanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarshallScanner.swift; sourceTree = "<group>"; };
+		BD938B004FA489DC1A543FE9 /* WidgetBridgeModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetBridgeModule.swift; sourceTree = "<group>"; };
+		C82020BC345AF137B42A5B25 /* MarshallWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarshallWidget.swift; sourceTree = "<group>"; };
+		D2E3F4A5B6C7D8E9F0A1B2C3 /* ControlRequestRelay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlRequestRelay.swift; sourceTree = "<group>"; };
+		DFA8C8C4218045FD6DD9B62C /* MarshallBleModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MarshallBleModule.m; sourceTree = "<group>"; };
+		E1F2A3B4C5D6E7F8091A2B3C /* ControlIntents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlIntents.swift; sourceTree = "<group>"; };
+		E8F3AE111957C4E0472D0C22 /* MarshallWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = MarshallWidget.entitlements; sourceTree = "<group>"; };
+		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F0E1D2C3B4A5968778695A4B /* ControlRequest.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlRequest.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		198B128BC3BB6FB8185D8A48 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B00A0ADA174AACB0CF2B9D72 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		514201462437B4B30078DB4F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3440615BA910084BADEB134A /* libPods-MarshallBluetooth-macOS.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0BDA7CAD24AD7223D6384638 /* Native */ = {
+			isa = PBXGroup;
+			children = (
+				FBE9928BE8BDC6F2C548C637 /* Core */,
+				13C5468807D0F2253B6D5866 /* MarshallBleModule.swift */,
+				DFA8C8C4218045FD6DD9B62C /* MarshallBleModule.m */,
+				BD938B004FA489DC1A543FE9 /* WidgetBridgeModule.swift */,
+				062545A918472A4E4E800A52 /* WidgetBridgeModule.m */,
+			);
+			name = Native;
+			path = Native;
+			sourceTree = "<group>";
+		};
+		202DE32E6EFDBCF0A5CC5F0D /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */,
+				F0E1D2C3B4A5968778695A4B /* ControlRequest.swift */,
+			);
+			name = Shared;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
+				70ADB9D9682B43DA4475A331 /* OS X */,
+				66A09578258D12F209E3E6FE /* libPods-MarshallBluetooth-macOS.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4872D327AF8B91153BE341F5 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				5B3BE93941EFB0EC58ACD3FF /* Pods-MarshallBluetooth-macOS.debug.xcconfig */,
+				9C9BD6B152A52DD54600FEA9 /* Pods-MarshallBluetooth-macOS.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		5142014A2437B4B30078DB4F /* MarshallBluetooth-macOS */ = {
+			isa = PBXGroup;
+			children = (
+				5142014C2437B4B30078DB4F /* AppDelegate.swift */,
+				514201512437B4B40078DB4F /* Assets.xcassets */,
+				514201562437B4B40078DB4F /* Info.plist */,
+				514201592437B4B40078DB4F /* MarshallBluetooth.entitlements */,
+				0BDA7CAD24AD7223D6384638 /* Native */,
+				77AC963C6E70B6C430D21592 /* PrivacyInfo.xcprivacy */,
+			);
+			path = "MarshallBluetooth-macOS";
+			sourceTree = "<group>";
+		};
+		70ADB9D9682B43DA4475A331 /* OS X */ = {
+			isa = PBXGroup;
+			children = (
+				234237712E4DA390D02FB3CD /* Cocoa.framework */,
+			);
+			name = "OS X";
+			sourceTree = "<group>";
+		};
+		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Libraries;
+			sourceTree = "<group>";
+		};
+		83CBB9F61A601CBA00E9B192 = {
+			isa = PBXGroup;
+			children = (
+				5142014A2437B4B30078DB4F /* MarshallBluetooth-macOS */,
+				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				83CBBA001A601CBA00E9B192 /* Products */,
+				2D16E6871FA4F8E400B85C8A /* Frameworks */,
+				202DE32E6EFDBCF0A5CC5F0D /* Shared */,
+				C337F8F6856A9A26B612359A /* MarshallWidget */,
+				4872D327AF8B91153BE341F5 /* Pods */,
+			);
+			indentWidth = 2;
+			sourceTree = "<group>";
+			tabWidth = 2;
+			usesTabs = 0;
+		};
+		83CBBA001A601CBA00E9B192 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1F1C4E2EEBD6BAEDB899E13F /* MarshallWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C337F8F6856A9A26B612359A /* MarshallWidget */ = {
+			isa = PBXGroup;
+			children = (
+				C82020BC345AF137B42A5B25 /* MarshallWidget.swift */,
+				E1F2A3B4C5D6E7F8091A2B3C /* ControlIntents.swift */,
+				96AD926971B33897305AAC85 /* Info.plist */,
+				E8F3AE111957C4E0472D0C22 /* MarshallWidget.entitlements */,
+			);
+			name = MarshallWidget;
+			path = MarshallWidget;
+			sourceTree = "<group>";
+		};
+		FBE9928BE8BDC6F2C548C637 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				7F2A9D3C1B8E45A6C0D9E8F1 /* MarshallProtocol.swift */,
+				A5A6400A85563AF77FB300A1 /* MarshallScanner.swift */,
+				59C7C8B948664A11654E8B00 /* WidgetPublisher.swift */,
+				8D1E3F2A4B5C6D7E9F0A1B2C /* StatusItemController.swift */,
+				D2E3F4A5B6C7D8E9F0A1B2C3 /* ControlRequestRelay.swift */,
+			);
+			name = Core;
+			path = Core;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		514201482437B4B30078DB4F /* MarshallBluetooth-macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5142015A2437B4B40078DB4F /* Build configuration list for PBXNativeTarget "MarshallBluetooth-macOS" */;
+			buildPhases = (
+				1A938104A937498D81B3BD3B /* [CP] Check Pods Manifest.lock */,
+				514201452437B4B30078DB4F /* Sources */,
+				514201462437B4B30078DB4F /* Frameworks */,
+				514201472437B4B30078DB4F /* Resources */,
+				381D8A6E24576A4E00465D17 /* Bundle React Native code and images */,
+				FDAB23A6F231609F5466123F /* Embed Foundation Extensions */,
+				F985A1819AE796A05C1A08AE /* [CP] Embed Pods Frameworks */,
+				D9D930F6F30DDA3D24743EBF /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AC753EAEEB0883FB4302B04F /* PBXTargetDependency */,
+			);
+			name = "MarshallBluetooth-macOS";
+			productName = MarshallBluetooth;
+			productReference = 514201492437B4B30078DB4F /* MarshallBluetooth.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E9DB740F07D7334B97DE475E /* MarshallWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EE3D3D9BE0226A0BACD8DCCE /* Build configuration list for PBXNativeTarget "MarshallWidget" */;
+			buildPhases = (
+				FFBBE96DDA7E58EDF0F7E086 /* Sources */,
+				198B128BC3BB6FB8185D8A48 /* Frameworks */,
+				459D19307FFD3D4515780113 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MarshallWidget;
+			productName = MarshallWidget;
+			productReference = 1F1C4E2EEBD6BAEDB899E13F /* MarshallWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		83CBB9F71A601CBA00E9B192 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1130;
+				TargetAttributes = {
+					13B07F861A680F5B00A75B9A = {
+						LastSwiftMigration = 1120;
+					};
+					514201482437B4B30078DB4F = {
+						CreatedOnToolsVersion = 11.4;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "MarshallBluetooth" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 83CBB9F61A601CBA00E9B192;
+			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				514201482437B4B30078DB4F /* MarshallBluetooth-macOS */,
+				E9DB740F07D7334B97DE475E /* MarshallWidget */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		459D19307FFD3D4515780113 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		514201472437B4B30078DB4F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				514201522437B4B40078DB4F /* Assets.xcassets in Resources */,
+				422752AB5B463555C71F2F95 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		1A938104A937498D81B3BD3B /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-MarshallBluetooth-macOS-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		381D8A6E24576A4E00465D17 /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle React Native code and images";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export NODE_BINARY=node\n../node_modules/react-native-macos/scripts/react-native-xcode.sh\n";
+		};
+		D9D930F6F30DDA3D24743EBF /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-MarshallBluetooth-macOS/Pods-MarshallBluetooth-macOS-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly/RCT-Folly_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/glog/glog_privacy.bundle",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCT-Folly_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/boost_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/glog_privacy.bundle",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-MarshallBluetooth-macOS/Pods-MarshallBluetooth-macOS-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F985A1819AE796A05C1A08AE /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-MarshallBluetooth-macOS/Pods-MarshallBluetooth-macOS-frameworks.sh",
+				"${PODS_ROOT}/Sparkle/Sparkle.framework",
+				"${PODS_ROOT}/hermes-engine/destroot/Library/Frameworks/macosx/hermesvm.framework",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sparkle.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermesvm.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-MarshallBluetooth-macOS/Pods-MarshallBluetooth-macOS-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		514201452437B4B30078DB4F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5142014D2437B4B30078DB4F /* AppDelegate.swift in Sources */,
+				9ACA374CB61AF5C9B36498BA /* MarshallBleModule.swift in Sources */,
+				D8AE45576FF34B8F6CC4C87C /* MarshallBleModule.m in Sources */,
+				0A1B4B54CEFA6C83782D49D3 /* WidgetBridgeModule.swift in Sources */,
+				96BC0D3039E43968020AEF77 /* WidgetBridgeModule.m in Sources */,
+				3E5B7C21A94D60F8B2C1D4E7 /* MarshallProtocol.swift in Sources */,
+				DEC7E4C9B249EDAF9674C29D /* MarshallScanner.swift in Sources */,
+				E195981E0D15B3081AC2903E /* WidgetPublisher.swift in Sources */,
+				4C9D2E7F1A3B5C6D8E0F2A1B /* StatusItemController.swift in Sources */,
+				6D69461968676235657D707F /* DeviceSnapshot.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* ControlRequest.swift in Sources */,
+				D4E5F60718293A4B5C6D7E8F /* ControlRequestRelay.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FFBBE96DDA7E58EDF0F7E086 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BCD8B4BAE4364490844909F8 /* MarshallWidget.swift in Sources */,
+				7302BAB41325B3097FA9AB05 /* DeviceSnapshot.swift in Sources */,
+				B2C3D4E5F60718293A4B5C6D /* ControlRequest.swift in Sources */,
+				C3D4E5F60718293A4B5C6D7E /* ControlIntents.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AC753EAEEB0883FB4302B04F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = MarshallWidget;
+			target = E9DB740F07D7334B97DE475E /* MarshallWidget */;
+			targetProxy = 0C0376E5C74696BEB43FE23F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		5142015B2437B4B40078DB4F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5B3BE93941EFB0EC58ACD3FF /* Pods-MarshallBluetooth-macOS.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = "MarshallBluetooth-macOS/MarshallBluetooth.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = NO;
+				DEVELOPMENT_TEAM = X575PLRF8N;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "MarshallBluetooth-macOS/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.uk.marshallbluetooth;
+				PRODUCT_NAME = Roadie;
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		5142015C2437B4B40078DB4F /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9C9BD6B152A52DD54600FEA9 /* Pods-MarshallBluetooth-macOS.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = "MarshallBluetooth-macOS/MarshallBluetooth.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = X575PLRF8N;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "MarshallBluetooth-macOS/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.uk.marshallbluetooth;
+				PRODUCT_NAME = Roadie;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		83CBBA201A601CBA00E9B192 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 0.0.0;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = "/usr/lib/swift $(inherited)";
+				LIBRARY_SEARCH_PATHS = (
+					"$(SDKROOT)/usr/lib/swift",
+					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
+					"\"$(inherited)\"",
+				);
+				MARKETING_VERSION = 0.0.0;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = "$(inherited)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
+				USE_HERMES = true;
+			};
+			name = Debug;
+		};
+		83CBBA211A601CBA00E9B192 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 0.0.0;
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = "/usr/lib/swift $(inherited)";
+				LIBRARY_SEARCH_PATHS = (
+					"$(SDKROOT)/usr/lib/swift",
+					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
+					"\"$(inherited)\"",
+				);
+				MARKETING_VERSION = 0.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = "$(inherited)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				USE_HERMES = true;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B13AF2A4D98CF9F5261D0736 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MarshallWidget/MarshallWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = X575PLRF8N;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = MarshallWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.uk.marshallbluetooth.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		DD8B404723CCD4BF7EDBE818 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MarshallWidget/MarshallWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = X575PLRF8N;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = MarshallWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.uk.marshallbluetooth.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5142015A2437B4B40078DB4F /* Build configuration list for PBXNativeTarget "MarshallBluetooth-macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5142015B2437B4B40078DB4F /* Debug */,
+				5142015C2437B4B40078DB4F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "MarshallBluetooth" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				83CBBA201A601CBA00E9B192 /* Debug */,
+				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EE3D3D9BE0226A0BACD8DCCE /* Build configuration list for PBXNativeTarget "MarshallWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD8B404723CCD4BF7EDBE818 /* Release */,
+				B13AF2A4D98CF9F5261D0736 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
+}

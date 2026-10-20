@@ -1,0 +1,6 @@
+# CocoaPods
+Pods/
+
+# SwiftPM (make swift-test)
+.build/
+.swiftpm/
