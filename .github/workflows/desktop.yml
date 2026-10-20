@@ -39,8 +39,8 @@ jobs:
     name: Gates (lint, typecheck, test)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -72,12 +72,15 @@ jobs:
             os: ubuntu-latest
             target: --linux
             assets: release/*.AppImage release/*.deb
+    # A job's defaults replace the workflow's, so bash is named again — Windows
+    # runners default to PowerShell.
     defaults:
       run:
+        shell: bash
         working-directory: MarshallBluetooth/app/desktop
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
