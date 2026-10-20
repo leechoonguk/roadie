@@ -42,18 +42,24 @@ struct StepControlIntent: AppIntent {
       log.error("\(control.rawValue, privacy: .public) \(step): no app group or no published speaker")
       return .result()
     }
+    // Stepping from a guessed start would write the guess: volume 0 on a
+    // speaker not yet read is silence. The button waits for the reading.
+    guard let current = snapshot.value(of: control) else {
+      log.info("\(control.rawValue, privacy: .public) \(step): not read from the speaker yet")
+      return .result()
+    }
     let request: ControlRequest
     switch control {
     case .volume:
-      let next = clamp((snapshot.volume ?? 0) + step, 0, snapshot.maxVolume ?? 31)
+      let next = clamp(current + step, 0, snapshot.maxVolume ?? 31)
       snapshot.volume = next
       request = .volume(next)
     case .bass:
-      let next = clamp((snapshot.bass ?? EQScale.flat) + step, EQScale.steps)
+      let next = clamp(current + step, EQScale.steps)
       snapshot.bass = next
       request = .bass(next)
     case .treble:
-      let next = clamp((snapshot.treble ?? EQScale.flat) + step, EQScale.steps)
+      let next = clamp(current + step, EQScale.steps)
       snapshot.treble = next
       request = .treble(next)
     }
@@ -82,6 +88,11 @@ struct ResetToneIntent: AppIntent {
       log.error("reset tone: no app group or no published speaker")
       return .result()
     }
+    // An EQ write carries both bands; the app has nothing to write until it has read them.
+    guard snapshot.bass != nil, snapshot.treble != nil else {
+      log.info("reset tone: tone not read from the speaker yet")
+      return .result()
+    }
     snapshot.bass = EQScale.flat
     snapshot.treble = EQScale.flat
     try SnapshotStore.save(snapshot, to: store)
@@ -89,5 +100,16 @@ struct ResetToneIntent: AppIntent {
     try ControlRequestQueue.enqueue(.treble(EQScale.flat), in: store)
     log.info("tone reset queued for \(snapshot.identifier, privacy: .public)")
     return .result()
+  }
+}
+
+extension DeviceSnapshot {
+  /// The setting a widget button steps, or nil until the app has read it.
+  func value(of control: WidgetControl) -> Int? {
+    switch control {
+    case .volume: return volume
+    case .bass: return bass
+    case .treble: return treble
+    }
   }
 }

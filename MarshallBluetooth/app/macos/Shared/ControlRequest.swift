@@ -14,25 +14,30 @@ enum ControlRequest: Codable, Equatable {
 
 enum ControlRequestQueue {
   static let file = "requests.json"
+  /// Held by the widget and the app around every read-modify-write of `file`.
+  static let lockFile = "requests.lock"
   /// Darwin notifications cross the process boundary without a payload; the
   /// payload is the queue itself.
   static let notification = "com.uk.marshallbluetooth.controlRequest"
 
   static func enqueue(_ request: ControlRequest, in store: SharedStore) throws {
-    var pending = drain(store, keep: true)
-    pending.append(request)
-    try store.write(pending, as: file)
+    try store.withLock(lockFile) {
+      var pending = store.read([ControlRequest].self, from: file) ?? []
+      pending.append(request)
+      try store.write(pending, as: file)
+    }
+    // Posted after the lock is released, so the woken app does not wait on it.
     CFNotificationCenterPostNotification(
       CFNotificationCenterGetDarwinNotifyCenter(),
       CFNotificationName(notification as CFString), nil, nil, true)
   }
 
-  /// Returns every pending request, clearing the queue unless `keep` is set.
-  static func drain(_ store: SharedStore, keep: Bool = false) -> [ControlRequest] {
-    let pending = store.read([ControlRequest].self, from: file) ?? []
-    if !keep {
+  /// Returns every pending request and clears the queue.
+  static func drain(_ store: SharedStore) -> [ControlRequest] {
+    store.withLock(lockFile) {
+      let pending = store.read([ControlRequest].self, from: file) ?? []
       store.remove(file)
+      return pending
     }
-    return pending
   }
 }

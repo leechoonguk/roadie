@@ -97,8 +97,10 @@ export function DeviceScreen(): React.JSX.Element {
   // Only an identity advertising the control service is picked automatically:
   // the speaker's other BLE identity connects but carries no controls.
   const controllable = speakers.find(row => row.advertisedServices.includes(CONTROL_SERVICE));
+  // Keyed on the row, not the id: a search can drop the selected row, and
+  // the next controllable speaker must then be picked up again.
   useEffect(() => {
-    if (selectedId !== null || controllable === undefined) {
+    if (selected !== null || controllable === undefined) {
       return;
     }
     setSelectedId(controllable.identifier);
@@ -106,7 +108,7 @@ export function DeviceScreen(): React.JSX.Element {
       autoConnected.current.add(controllable.identifier);
       marshallBle.connect(controllable.identifier);
     }
-  }, [controllable, selectedId]);
+  }, [controllable, selected]);
 
   useEffect(() => {
     if (widgetKey === null) {
@@ -124,7 +126,10 @@ export function DeviceScreen(): React.JSX.Element {
     return () => clearTimeout(timer);
   }, [widgetKey]);
 
+  // The core forgets every speaker that is not connected when a search starts,
+  // so a row kept here would offer a Connect that fails as "Unknown device".
   const searchAgain = () => {
+    setRows(current => current.filter(row => row.isConnected));
     marshallBle.startScan();
     setScanning(true);
   };

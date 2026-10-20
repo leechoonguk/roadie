@@ -171,7 +171,9 @@ struct MarshallWidgetView: View {
           .background(Capsule().fill(.fill.secondary))
       }
       .buttonStyle(.plain)
-      .disabled(!adjustable || (snapshot.bass == EQScale.flat && snapshot.treble == EQScale.flat))
+      .disabled(
+        !adjustable || snapshot.bass == nil || snapshot.treble == nil
+          || (snapshot.bass == EQScale.flat && snapshot.treble == EQScale.flat))
       .accessibilityLabel("Reset tone to flat")
     }
   }
@@ -214,7 +216,7 @@ struct MarshallWidgetView: View {
     }
     .buttonStyle(.plain)
     .widgetAccentable()
-    .disabled(!adjustable)
+    .disabled(!adjustable || snapshot.value(of: control) == nil)
     .accessibilityLabel("\(control.rawValue) \(step > 0 ? "up" : "down")")
   }
 
