@@ -3,9 +3,10 @@
 # The macOS app is built, signed and released on the maintainer's Mac with
 # `make release` (MarshallBluetooth/.omp/rules/release.md) — never here. This
 # workflow builds the two desktop installers on every change, and when that
-# release is published it attaches the Windows and Linux installers to it. It
-# only ever adds assets: Roadie.zip, appcast.xml and checksums.txt — the files
-# every installed Mac copy updates from — are never touched.
+# release is published it attaches the Windows and Linux installers to it,
+# with the `latest.yml` / `latest-linux.yml` feeds installed copies update from
+# (electron-updater). It only ever adds assets: Roadie.zip, appcast.xml and
+# checksums.txt — the files every installed Mac copy updates from — are never touched.
 name: Desktop (Windows, Linux)
 
 on:
@@ -67,11 +68,11 @@ jobs:
           - name: Windows
             os: windows-latest
             target: --win
-            assets: release/*.exe
+            assets: release/*.exe release/*.exe.blockmap release/latest.yml
           - name: Linux
             os: ubuntu-latest
             target: --linux
-            assets: release/*.AppImage release/*.deb
+            assets: release/*.AppImage release/*.deb release/latest-linux.yml
     # A job's defaults replace the workflow's, so bash is named again — Windows
     # runners default to PowerShell.
     defaults:
@@ -105,8 +106,10 @@ jobs:
           name: Roadie-${{ env.VERSION }}-${{ matrix.name }}
           path: |
             MarshallBluetooth/app/desktop/release/*.exe
+            MarshallBluetooth/app/desktop/release/*.exe.blockmap
             MarshallBluetooth/app/desktop/release/*.AppImage
             MarshallBluetooth/app/desktop/release/*.deb
+            MarshallBluetooth/app/desktop/release/latest*.yml
           if-no-files-found: error
       - name: Attach to the release
         if: github.event_name == 'release'
