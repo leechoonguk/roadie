@@ -5,8 +5,8 @@
 # workflow builds the two desktop installers on every change, and when that
 # release is published it attaches the Windows and Linux installers to it,
 # with the `latest.yml` / `latest-linux.yml` feeds installed copies update from
-# (electron-updater). It only ever adds assets: Roadie.zip, appcast.xml and
-# checksums.txt — the files every installed Mac copy updates from — are never touched.
+# (electron-updater). It only ever adds assets: Roadie-<version>-macos.dmg,
+# appcast.xml and checksums.txt — the files every installed Mac copy updates from — are never touched.
 name: Desktop (Windows, Linux)
 
 on:
