@@ -13,6 +13,7 @@ import {
   toWidgetPayload,
 } from '../devices';
 import { type BluetoothState, type ControlState, marshallBle } from '../native/marshallBle';
+import { checkForUpdates, type UpdateInfo, updateInfo } from '../native/appUpdates';
 import { publishToWidget, type WidgetPayload } from '../native/widgetBridge';
 import { colors, space } from '../theme';
 
@@ -63,6 +64,7 @@ export function DeviceScreen(): React.JSX.Element {
   const [status, setStatus] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [widgetNote, setWidgetNote] = useState<string | null>(null);
+  const [appUpdate, setAppUpdate] = useState<UpdateInfo | null>(null);
   // Speakers connected automatically once; after a manual Disconnect the app
   // must not reconnect behind the user's back.
   const autoConnected = useRef(new Set<string>());
@@ -89,6 +91,11 @@ export function DeviceScreen(): React.JSX.Element {
     marshallBle.startScan();
     setScanning(true);
     return () => subscriptions.forEach(subscription => subscription.remove());
+  }, []);
+
+  useEffect(() => {
+    // A build without the module shows no version and no button; nothing else depends on it.
+    updateInfo().then(setAppUpdate, () => undefined);
   }, []);
 
   useEffect(() => {
@@ -170,15 +177,31 @@ export function DeviceScreen(): React.JSX.Element {
           </Text>
           {scanning && <ActivityIndicator size="small" />}
         </View>
-        {!scanning && (
-          <Pressable
-            accessibilityRole="button"
-            onPress={searchAgain}
-            style={({ pressed }) => [styles.toolbarButton, pressed && styles.pressed]}
-          >
-            <Text style={styles.toolbarButtonText}>Search Again</Text>
-          </Pressable>
-        )}
+        <View style={styles.toolbarActions}>
+          {appUpdate !== null && (
+            <Text testID="app-version" style={styles.versionText}>
+              Roadie {appUpdate.version}
+            </Text>
+          )}
+          {appUpdate?.canCheck === true && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={checkForUpdates}
+              style={({ pressed }) => [styles.toolbarButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.toolbarButtonText}>Check for Updates</Text>
+            </Pressable>
+          )}
+          {!scanning && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={searchAgain}
+              style={({ pressed }) => [styles.toolbarButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.toolbarButtonText}>Search Again</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
       {hint !== undefined && <Text style={styles.hint}>{hint}</Text>}
       {status !== null && (
@@ -242,6 +265,8 @@ const styles = StyleSheet.create({
   statusDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: colors.track },
   statusDotOn: { backgroundColor: colors.connected },
   statusText: { color: colors.secondaryLabel, fontSize: 12 },
+  toolbarActions: { flexDirection: 'row', alignItems: 'center', gap: space.s },
+  versionText: { color: colors.tertiaryLabel, fontSize: 11 },
   toolbarButton: {
     height: 26,
     paddingHorizontal: space.m,

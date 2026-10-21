@@ -26,6 +26,12 @@
  *      twice), and never uploads a file named like one of the release's own
  *      assets — a clobbered `appcast.xml` or `Roadie.zip` ships a broken
  *      update to every installed Mac.
+ *   7. Every platform's feed — Windows and Linux update from the GitHub
+ *      release named by `publish` in `app/desktop/package.json`, and only when
+ *      `desktop.yml` uploads the `latest.yml` / `latest-linux.yml` electron-updater
+ *      reads; Android reads `RELEASE_REPO` in `app/src/updates.ts`. Each names
+ *      the repository `app-release.ts` publishes to, or that platform's copies
+ *      look somewhere no release ever arrives.
  *
  * Reads files only (no keychain, no network). Dormant (cause `absent`) while the
  * app has no Info.plist.
@@ -42,7 +48,7 @@ import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
 import { touchesPath } from "../lib/hook-scope.ts";
 import { dormant, passLine } from "../lib/hook-dormancy.ts";
 import { resolveProjectRoot } from "../lib/hook-project-root.ts";
-import { FEED_URL, RELEASE_ASSETS } from "../lib/app-release.ts";
+import { FEED_URL, RELEASE_ASSETS, RELEASE_REPO } from "../lib/app-release.ts";
 import { plistArray, plistString, plistTrue } from "../lib/app-xcode-project.ts";
 
 declare const process: { argv: string[]; exit(code?: number): never };
@@ -62,6 +68,10 @@ const INSTALLER_SERVICES = ["$(PRODUCT_BUNDLE_IDENTIFIER)-spks", "$(PRODUCT_BUND
 /** The workflows `release.md` names as attaching installers; relative to the repository root, the project's parent. */
 const WORKFLOWS = ["desktop.yml", "native.yml"];
 const WORKFLOW_DIR = "../.github/workflows";
+const DESKTOP_PACKAGE = "app/desktop/package.json";
+const SHARED_UPDATES = "app/src/updates.ts";
+/** The feeds electron-updater reads, per platform; `desktop.yml` must upload both. */
+const DESKTOP_FEEDS = ["latest.yml", "latest-linux.yml"];
 const VERSION_KEYS: Array<[string, string]> = [
   ["CFBundleShortVersionString", "$(MARKETING_VERSION)"],
   ["CFBundleVersion", "$(CURRENT_PROJECT_VERSION)"],
@@ -152,7 +162,54 @@ export function checkReleaseSync(): string[] {
   }
 
   issues.push(...checkWorkflows());
+  issues.push(...checkPlatformFeeds());
   return issues;
+}
+
+/** Claim 7: the Windows, Linux and Android update paths name the repository releases go to. */
+function checkPlatformFeeds(): string[] {
+  const issues: string[] = [];
+  if (existsSync(join(projectRoot, DESKTOP_PACKAGE))) {
+    const publish = desktopPublish(JSON.parse(read(DESKTOP_PACKAGE)));
+    if (publish === null || publish.provider !== "github" || `${publish.owner}/${publish.repo}` !== RELEASE_REPO) {
+      const named = publish === null ? "unset" : `${publish.provider} ${publish.owner}/${publish.repo}`;
+      issues.push(
+        `${DESKTOP_PACKAGE}: build.publish is ${named}, not github ${RELEASE_REPO} — ` +
+          "the packaged app's app-update.yml would point Windows and Linux copies away from the releases",
+      );
+    }
+    const workflow = `${WORKFLOW_DIR}/desktop.yml`;
+    if (existsSync(join(projectRoot, workflow))) {
+      const assets = [...read(workflow).matchAll(/^\s+assets:\s*(.+)$/gm)].flatMap((m) => m[1].split(/\s+/));
+      for (const feed of DESKTOP_FEEDS.filter((name) => !assets.some((token) => token.split("/").pop() === name))) {
+        issues.push(`${workflow}: uploads no ${feed} — installed copies on that OS exist but never see a release`);
+      }
+    }
+  }
+  if (existsSync(join(projectRoot, SHARED_UPDATES))) {
+    const repo = /export const RELEASE_REPO = '([^']+)'/.exec(read(SHARED_UPDATES))?.[1];
+    if (repo !== RELEASE_REPO) {
+      issues.push(
+        `${SHARED_UPDATES}: RELEASE_REPO is ${repo === undefined ? "unreadable" : `'${repo}'`}, not ${RELEASE_REPO} — ` +
+          "Android would check a repository releases are never published to",
+      );
+    }
+  }
+  return issues;
+}
+
+/** `build.publish` of the desktop package.json, when it is one provider object. */
+function desktopPublish(manifest: unknown): { provider: unknown; owner: unknown; repo: unknown } | null {
+  if (typeof manifest !== "object" || manifest === null || !("build" in manifest)) return null;
+  const build = manifest.build;
+  if (typeof build !== "object" || build === null || !("publish" in build)) return null;
+  const publish = build.publish;
+  if (typeof publish !== "object" || publish === null) return null;
+  return {
+    provider: "provider" in publish ? publish.provider : undefined,
+    owner: "owner" in publish ? publish.owner : undefined,
+    repo: "repo" in publish ? publish.repo : undefined,
+  };
 }
 
 /** Claim 6: the installer workflows run on a published release and add only their own files. */

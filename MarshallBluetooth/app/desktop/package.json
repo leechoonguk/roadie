@@ -12,11 +12,11 @@
   "homepage": "https://github.com/leechoonguk/roadie",
   "main": "out/main.cjs",
   "desktopName": "roadie.desktop",
-  "dependencies": {},
   "devDependencies": {
     "@types/web-bluetooth": "0.0.21",
     "electron": "43.7.7",
     "electron-builder": "26.17.0",
+    "electron-updater": "6.8.11",
     "esbuild": "0.28.2",
     "react": "19.2.0",
     "react-dom": "19.2.0",
@@ -38,7 +38,12 @@
     ],
     "icon": "out/icon.png",
     "artifactName": "Roadie-${version}-${os}-${arch}.${ext}",
-    "publish": null,
+    "publish": {
+      "provider": "github",
+      "owner": "leechoonguk",
+      "repo": "roadie",
+      "releaseType": "release"
+    },
     "win": {
       "target": [
         {

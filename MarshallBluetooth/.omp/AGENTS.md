@@ -5,12 +5,12 @@
 **Roadie** — volume and tone of a Marshall Bluetooth speaker, on six
 platforms from one set of React Native screens (TypeScript, npm):
 
-| Platform | Window | Bluetooth | Widget |
-|---|---|---|---|
-| macOS | react-native-macos 0.83, menu bar app | Swift over CoreBluetooth | WidgetKit, through the resident app |
-| iOS | React Native 0.83 | the same Swift, compiled again | the same WidgetKit sources; a press connects for itself |
-| Windows, Linux | Electron + react-native-web | `src/ble/client.ts` over Web Bluetooth | the tray menu |
-| Android | React Native 0.83 | `src/ble/client.ts` over react-native-ble-plx | react-native-android-widget; a press connects for itself |
+| Platform | Window | Bluetooth | Widget | Updates (rule://release) |
+|---|---|---|---|---|
+| macOS | react-native-macos 0.83, menu bar app | Swift over CoreBluetooth | WidgetKit, through the resident app | Sparkle |
+| iOS | React Native 0.83 | the same Swift, compiled again | the same WidgetKit sources; a press connects for itself | none (Xcode install) |
+| Windows, Linux | Electron + react-native-web | `src/ble/client.ts` over Web Bluetooth | the tray menu | electron-updater |
+| Android | React Native 0.83 | `src/ble/client.ts` over react-native-ble-plx | react-native-android-widget; a press connects for itself | checks GitHub, opens the APK |
 
 One Bluetooth core per language: Swift for Apple platforms, TypeScript for the
 rest, held to each other by rule://app-protocol-parity; the layers and swaps
@@ -31,7 +31,8 @@ app/                          React Native + react-native-macos, TypeScript, npm
   App.tsx, index.js           entry points (index.js also registers background tasks)
   metro.config.js             Android swaps of src/native/* → mobile/src/
   react-native.config.js      keeps Android-only libraries out of the Apple builds
-  src/native/*.ts             typed wrappers over NativeModules (MarshallBle, WidgetBridge) — the API every platform implements
+  src/native/*.ts             typed wrappers over NativeModules (MarshallBle, WidgetBridge, AppUpdates) — the API every platform implements
+  src/updates.ts              release repository and version order (Android's updater; rule://release)
   src/ble/client.ts           that API over any JS Bluetooth transport (Windows, Linux, Android)
   src/protocol.ts             GATT UUIDs and value codecs (TypeScript half; Swift half in macos/)
   src/controls.ts             the press model: ControlAction, stepControl
@@ -76,6 +77,7 @@ the Git repository root is the parent directory and holds other projects.
 | Windows/Linux app | `make desktop-start`; installers with `make desktop-dist v=x.y.z` (this OS only — CI builds both) |
 | Android APK, iOS build | `make android-apk v=x.y.z` (Android SDK, JDK 17); `make ios-build` (Xcode, simulator) |
 | Talk to the speaker without the app | `make ble-probe ARGS="--target ACTON --raw"` |
+| Release (only when asked) | `make release bump=patch\|minor\|major` (`DRY_RUN=1` first); `make app-install` puts the published Mac build in /Applications |
 | One harness check | `make check-<name>` (listed by `make help`) |
 | The whole gate | `make verify` — runs once, at commit, through `make commit` |
 | Publish (only when asked) | `make commit m="type(scope): subject"`, `make push` |

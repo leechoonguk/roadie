@@ -12,18 +12,22 @@
  *   node app-release.ts dist <x.y.z>               build + package + sign into app/macos/build/dist
  *   node app-release.ts release <patch|minor|major> [--dry-run]
  *   node app-release.ts unrelease <vX.Y.Z>
+ *   node app-release.ts install                    the published release → /Applications, the only registered copy
  *
- * Run through `make dist`, `make release` and `make unrelease`; `check-release`
- * imports the names below so the feed, the assets and the Info.plist stay in step.
+ * Run through `make dist`, `make release`, `make unrelease` and `make app-install`;
+ * `check-release` imports the names below so the feed, the assets and the
+ * Info.plist stay in step.
  */
 // @ts-expect-error — Node builtin, not project-compiled
 import { spawnSync } from "node:child_process";
 // @ts-expect-error — Node builtin, not project-compiled
 import { createHash } from "node:crypto";
 // @ts-expect-error — Node builtin, not project-compiled
-import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 // @ts-expect-error — Node builtin, not project-compiled
 import { join } from "node:path";
+// @ts-expect-error — Node builtin, not project-compiled
+import { tmpdir } from "node:os";
 import { resolveProjectRoot } from "./hook-project-root.ts";
 
 declare const process: { argv: string[]; exit(code?: number): never; env: Record<string, string | undefined> };
@@ -57,6 +61,10 @@ const MINIMUM_SYSTEM = "14.0";
 const VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 /** Commit subjects left out of release notes: they change nothing a user sees. */
 const NOTE_EXCLUDE = /^(docs|test|chore\(harness\))(\(|:)/;
+/** Where the one copy of Roadie lives; Sparkle replaces this bundle in place. */
+const INSTALLED_APP = "/Applications/Roadie.app";
+const LSREGISTER =
+  "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister";
 
 const root = resolveProjectRoot();
 
@@ -171,6 +179,42 @@ export function unrelease(tag: string | undefined): void {
   say(`unreleased ${tag}`);
 }
 
+/**
+ * Installs the published release the way a user gets it, and makes it the only
+ * Roadie macOS knows: build copies are unregistered from LaunchServices and the
+ * widget host, so the widget, Spotlight and `open -b` all reach `/Applications`.
+ * Development builds stay on disk; `make relaunch` registers one again.
+ */
+export function install(): void {
+  const work = mkdtempSync(join(tmpdir(), "roadie-install-"));
+  try {
+    const base = `https://github.com/${RELEASE_REPO}/releases/latest/download`;
+    run("curl", ["-fsSL", "-o", join(work, ARCHIVE_ASSET), `${base}/${ARCHIVE_ASSET}`]);
+    const sums = output("curl", ["-fsSL", `${base}/${CHECKSUMS_ASSET}`]);
+    const expected = sums.split("\n").find((line) => line.trim().endsWith(`  ${ARCHIVE_ASSET}`))?.split(" ")[0];
+    const actual = createHash("sha256").update(readFileSync(join(work, ARCHIVE_ASSET))).digest("hex");
+    if (expected !== actual) fail(`${ARCHIVE_ASSET}: sha256 ${actual} does not match ${CHECKSUMS_ASSET} (${expected ?? "no entry"})`);
+    run("ditto", ["-x", "-k", join(work, ARCHIVE_ASSET), work]);
+    run("codesign", ["--verify", "--deep", "--strict", join(work, "Roadie.app")]);
+
+    spawnSync("pkill", ["-x", "Roadie"], { stdio: "ignore" });
+    for (const copy of buildCopies()) {
+      spawnSync("pluginkit", ["-r", `${copy}/Contents/PlugIns/MarshallWidget.appex`], { stdio: "ignore" });
+      spawnSync(LSREGISTER, ["-u", copy], { stdio: "ignore" });
+      say(`unregistered ${copy}`);
+    }
+    rmSync(INSTALLED_APP, { recursive: true, force: true });
+    run("ditto", [join(work, "Roadie.app"), INSTALLED_APP]);
+    run(LSREGISTER, ["-f", INSTALLED_APP]);
+    run("pluginkit", ["-a", `${INSTALLED_APP}/Contents/PlugIns/MarshallWidget.appex`]);
+    run("open", [INSTALLED_APP]);
+    spawnSync("killall", ["chronod"], { stdio: "ignore" });
+    say(`installed Roadie ${plistValue(`${INSTALLED_APP}/Contents/Info.plist`, "CFBundleShortVersionString")} at ${INSTALLED_APP}`);
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+}
+
 // ============================================================
 // Helpers
 // ============================================================
@@ -187,6 +231,13 @@ function checkBundle(version: string): void {
     if (!existsSync(join(root, BUILT_APP, part))) fail(`${BUILT_APP}/${part} is missing from the Release build`);
   }
   run("codesign", ["--verify", "--deep", "--strict", BUILT_APP]);
+}
+
+/** Roadie bundles Spotlight finds in a build directory (Xcode's DerivedData or this project's build/). */
+function buildCopies(): string[] {
+  return output("mdfind", ["kMDItemCFBundleIdentifier == 'com.uk.marshallbluetooth'"])
+    .split("\n")
+    .filter((path) => path.endsWith(".app") && (path.includes("/DerivedData/") || path.startsWith(join(root, "app/macos/build"))));
 }
 
 /** The single-item Sparkle feed for `version`. */
@@ -274,7 +325,8 @@ if (typeof process !== "undefined" && process.argv[1]?.endsWith("app-release.ts"
     if (command === "dist") dist(argument);
     else if (command === "release") release(argument, flag === "--dry-run");
     else if (command === "unrelease") unrelease(argument);
-    else fail("usage: app-release.ts dist <x.y.z> | release <patch|minor|major> [--dry-run] | unrelease <vX.Y.Z>");
+    else if (command === "install") install();
+    else fail("usage: app-release.ts dist <x.y.z> | release <patch|minor|major> [--dry-run] | unrelease <vX.Y.Z> | install");
   } catch (error) {
     fail(error instanceof Error ? error.message : String(error));
   }

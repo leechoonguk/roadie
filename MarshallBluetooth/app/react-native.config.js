@@ -10,5 +10,6 @@ module.exports = {
   dependencies: {
     'react-native-ble-plx': ANDROID_ONLY,
     '@react-native-async-storage/async-storage': ANDROID_ONLY,
+    'react-native-device-info': ANDROID_ONLY,
   },
 };

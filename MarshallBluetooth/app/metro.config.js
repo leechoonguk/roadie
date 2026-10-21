@@ -11,6 +11,7 @@ const MOBILE = path.join(__dirname, 'mobile', 'src');
 const ANDROID_SWAPS = [
   [/\/native\/marshallBle$/, path.join(MOBILE, 'marshallBle.ts')],
   [/\/native\/widgetBridge$/, path.join(MOBILE, 'widgetBridge.ts')],
+  [/\/native\/appUpdates$/, path.join(MOBILE, 'appUpdates.ts')],
   [/\/native\/backgroundTasks$/, path.join(MOBILE, 'widget.tsx')],
 ];
 

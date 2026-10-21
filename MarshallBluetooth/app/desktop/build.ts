@@ -23,6 +23,7 @@ const production = process.env.NODE_ENV !== 'development';
 const SWAPS: Array<[RegExp, string]> = [
   [/\/native\/marshallBle$/, join(here, 'src', 'renderer', 'marshallBle.ts')],
   [/\/native\/widgetBridge$/, join(here, 'src', 'renderer', 'widgetBridge.ts')],
+  [/\/native\/appUpdates$/, join(here, 'src', 'renderer', 'appUpdates.ts')],
 ];
 
 /**

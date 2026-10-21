@@ -25,6 +25,7 @@ import {
 } from '../../src/controls';
 import type { WidgetPayload } from '../../src/native/widgetBridge';
 import { CHANNELS, type ChooserDevice, type ControlRequest } from './bridge';
+import { checkForUpdates, startUpdates, updateInfo, updatesSupported } from './updates';
 
 const state = {
   window: null as BrowserWindow | null,
@@ -52,6 +53,7 @@ if (!app.requestSingleInstanceLock()) {
     Menu.setApplicationMenu(null);
     createWindow();
     createTray();
+    startUpdates();
   });
 }
 
@@ -64,6 +66,10 @@ ipcMain.on(CHANNELS.cancel, () => answer(''));
 ipcMain.on(CHANNELS.publish, (_event, payload: WidgetPayload) => {
   state.payload = payload;
   updateTray();
+});
+ipcMain.handle(CHANNELS.updateInfo, () => updateInfo());
+ipcMain.on(CHANNELS.checkForUpdates, () => {
+  checkForUpdates(true).catch(() => undefined);
 });
 
 function createWindow(): void {
@@ -173,6 +179,9 @@ function speakerItems(payload: WidgetPayload | null): MenuItemConstructorOptions
 function appItems(): MenuItemConstructorOptions[] {
   return [
     { label: 'Show Roadie', click: showWindow },
+    ...(updatesSupported()
+      ? [{ label: 'Check for Updates…', click: () => checkForUpdates(true).catch(() => undefined) }]
+      : []),
     { label: 'Quit Roadie', click: () => app.quit() },
   ];
 }

@@ -67,6 +67,8 @@ test('a desktop search lists candidates, connecting one answers the request, and
       candidates = listener;
     },
     onControl: jest.fn(),
+    updateInfo: jest.fn(async () => ({ version: '0.0.0', canCheck: false })),
+    checkForUpdates: jest.fn(),
   };
   const bluetooth = {
     requestDevice: () => request.promise,

@@ -11,6 +11,8 @@ const bridge: RoadieBridge = {
   select: deviceId => ipcRenderer.send(CHANNELS.select, deviceId),
   cancel: () => ipcRenderer.send(CHANNELS.cancel),
   publish: payload => ipcRenderer.send(CHANNELS.publish, payload),
+  updateInfo: () => ipcRenderer.invoke(CHANNELS.updateInfo),
+  checkForUpdates: () => ipcRenderer.send(CHANNELS.checkForUpdates),
   onDevices: listener => {
     ipcRenderer.on(CHANNELS.devices, (_event, devices: ChooserDevice[]) => listener(devices));
   },

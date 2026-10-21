@@ -41,7 +41,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   func applicationDidFinishLaunching(_ notification: Notification) {
-    statusItem = StatusItemController(openWindow: { [weak self] in self?.showMainWindow() }, updateItem: updateMenuItem())
+    AppUpdates.isAvailable = updater.updater.canCheckForUpdates
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(checkForUpdates), name: AppUpdates.checkRequested, object: nil)
+    statusItem = StatusItemController(
+      openWindow: { [weak self] in self?.showMainWindow() },
+      updateItem: AppDelegate.isDebugBuild ? nil : updateMenuItem())
+  }
+
+  /// The window's "Check for Updates" button; the menu item reaches Sparkle directly.
+  @objc private func checkForUpdates() {
+    NSApp.activate(ignoringOtherApps: true)
+    updater.checkForUpdates(nil)
   }
 
   private static var isDebugBuild: Bool {
@@ -52,8 +63,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 #endif
   }
 
-  /// Sparkle validates the item itself: it is disabled while a check runs, and
-  /// in a Debug build, where the updater never started.
+  /// Sparkle validates the item itself: it is disabled while a check runs. A
+  /// Debug build gets no item — its updater never started.
   private func updateMenuItem() -> NSMenuItem {
     let item = NSMenuItem(
       title: "Check for Updates…", action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)), keyEquivalent: "")

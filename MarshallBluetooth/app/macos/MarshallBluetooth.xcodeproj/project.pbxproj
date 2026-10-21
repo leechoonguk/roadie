@@ -10,15 +10,19 @@
 		0A1B4B54CEFA6C83782D49D3 /* WidgetBridgeModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD938B004FA489DC1A543FE9 /* WidgetBridgeModule.swift */; };
 		3440615BA910084BADEB134A /* libPods-MarshallBluetooth-macOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 66A09578258D12F209E3E6FE /* libPods-MarshallBluetooth-macOS.a */; };
 		3E5B7C21A94D60F8B2C1D4E7 /* MarshallProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2A9D3C1B8E45A6C0D9E8F1 /* MarshallProtocol.swift */; };
+		40FF82D82B6C03E05D1B37C2 /* OneShotSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F247C0F0C60E647E3CED4912 /* OneShotSession.swift */; };
 		422752AB5B463555C71F2F95 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77AC963C6E70B6C430D21592 /* PrivacyInfo.xcprivacy */; };
 		4C9D2E7F1A3B5C6D8E0F2A1B /* StatusItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D1E3F2A4B5C6D7E9F0A1B2C /* StatusItemController.swift */; };
 		5142014D2437B4B30078DB4F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5142014C2437B4B30078DB4F /* AppDelegate.swift */; };
 		514201522437B4B40078DB4F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 514201512437B4B40078DB4F /* Assets.xcassets */; };
+		5A1E0C0D0E0F101112131415 /* AppUpdates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1E0C0D0E0F101112131416 /* AppUpdates.swift */; };
+		5A1E0C0D0E0F101112131417 /* AppUpdatesModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1E0C0D0E0F101112131418 /* AppUpdatesModule.swift */; };
+		5A1E0C0D0E0F101112131419 /* AppUpdatesModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 5A1E0C0D0E0F10111213141A /* AppUpdatesModule.m */; };
 		5A7E8FE31C58693533CCBA01 /* MarshallWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1F1C4E2EEBD6BAEDB899E13F /* MarshallWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		6D69461968676235657D707F /* DeviceSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */; };
 		67375A2D7BC634595E789300 /* ControlStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A27509AD66C7B80AB4AAEC8 /* ControlStep.swift */; };
-		7302BAB41325B3097FA9AB05 /* DeviceSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */; };
 		6CB7E8AF33D560FD33108E9C /* ControlStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A27509AD66C7B80AB4AAEC8 /* ControlStep.swift */; };
+		6D69461968676235657D707F /* DeviceSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */; };
+		7302BAB41325B3097FA9AB05 /* DeviceSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */; };
 		96BC0D3039E43968020AEF77 /* WidgetBridgeModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 062545A918472A4E4E800A52 /* WidgetBridgeModule.m */; };
 		9ACA374CB61AF5C9B36498BA /* MarshallBleModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13C5468807D0F2253B6D5866 /* MarshallBleModule.swift */; };
 		A1B2C3D4E5F60718293A4B5C /* ControlRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E1D2C3B4A5968778695A4B /* ControlRequest.swift */; };
@@ -27,7 +31,6 @@
 		BCD8B4BAE4364490844909F8 /* MarshallWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020BC345AF137B42A5B25 /* MarshallWidget.swift */; };
 		C3D4E5F60718293A4B5C6D7E /* ControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F2A3B4C5D6E7F8091A2B3C /* ControlIntents.swift */; };
 		D4E5F60718293A4B5C6D7E8F /* ControlRequestRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E3F4A5B6C7D8E9F0A1B2C3 /* ControlRequestRelay.swift */; };
-		40FF82D82B6C03E05D1B37C2 /* OneShotSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F247C0F0C60E647E3CED4912 /* OneShotSession.swift */; };
 		D8AE45576FF34B8F6CC4C87C /* MarshallBleModule.m in Sources */ = {isa = PBXBuildFile; fileRef = DFA8C8C4218045FD6DD9B62C /* MarshallBleModule.m */; };
 		DEC7E4C9B249EDAF9674C29D /* MarshallScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5A6400A85563AF77FB300A1 /* MarshallScanner.swift */; };
 		E195981E0D15B3081AC2903E /* WidgetPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C7C8B948664A11654E8B00 /* WidgetPublisher.swift */; };
@@ -61,15 +64,18 @@
 		062545A918472A4E4E800A52 /* WidgetBridgeModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WidgetBridgeModule.m; sourceTree = "<group>"; };
 		13C5468807D0F2253B6D5866 /* MarshallBleModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarshallBleModule.swift; sourceTree = "<group>"; };
 		163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DeviceSnapshot.swift; sourceTree = "<group>"; };
-		4A27509AD66C7B80AB4AAEC8 /* ControlStep.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlStep.swift; sourceTree = "<group>"; };
 		1F1C4E2EEBD6BAEDB899E13F /* MarshallWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MarshallWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		234237712E4DA390D02FB3CD /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		4A27509AD66C7B80AB4AAEC8 /* ControlStep.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlStep.swift; sourceTree = "<group>"; };
 		514201492437B4B30078DB4F /* MarshallBluetooth.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MarshallBluetooth.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5142014C2437B4B30078DB4F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		514201512437B4B40078DB4F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		514201562437B4B40078DB4F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		514201592437B4B40078DB4F /* MarshallBluetooth.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MarshallBluetooth.entitlements; sourceTree = "<group>"; };
 		59C7C8B948664A11654E8B00 /* WidgetPublisher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetPublisher.swift; sourceTree = "<group>"; };
+		5A1E0C0D0E0F101112131416 /* AppUpdates.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppUpdates.swift; sourceTree = "<group>"; };
+		5A1E0C0D0E0F101112131418 /* AppUpdatesModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppUpdatesModule.swift; sourceTree = "<group>"; };
+		5A1E0C0D0E0F10111213141A /* AppUpdatesModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = AppUpdatesModule.m; sourceTree = "<group>"; };
 		5B3BE93941EFB0EC58ACD3FF /* Pods-MarshallBluetooth-macOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MarshallBluetooth-macOS.debug.xcconfig"; path = "Target Support Files/Pods-MarshallBluetooth-macOS/Pods-MarshallBluetooth-macOS.debug.xcconfig"; sourceTree = "<group>"; };
 		66A09578258D12F209E3E6FE /* libPods-MarshallBluetooth-macOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-MarshallBluetooth-macOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		77AC963C6E70B6C430D21592 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = ../PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -81,12 +87,12 @@
 		BD938B004FA489DC1A543FE9 /* WidgetBridgeModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetBridgeModule.swift; sourceTree = "<group>"; };
 		C82020BC345AF137B42A5B25 /* MarshallWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarshallWidget.swift; sourceTree = "<group>"; };
 		D2E3F4A5B6C7D8E9F0A1B2C3 /* ControlRequestRelay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlRequestRelay.swift; sourceTree = "<group>"; };
-		F247C0F0C60E647E3CED4912 /* OneShotSession.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OneShotSession.swift; sourceTree = "<group>"; };
 		DFA8C8C4218045FD6DD9B62C /* MarshallBleModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MarshallBleModule.m; sourceTree = "<group>"; };
 		E1F2A3B4C5D6E7F8091A2B3C /* ControlIntents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlIntents.swift; sourceTree = "<group>"; };
 		E8F3AE111957C4E0472D0C22 /* MarshallWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = MarshallWidget.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F0E1D2C3B4A5968778695A4B /* ControlRequest.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlRequest.swift; sourceTree = "<group>"; };
+		F247C0F0C60E647E3CED4912 /* OneShotSession.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OneShotSession.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -117,6 +123,8 @@
 				DFA8C8C4218045FD6DD9B62C /* MarshallBleModule.m */,
 				BD938B004FA489DC1A543FE9 /* WidgetBridgeModule.swift */,
 				062545A918472A4E4E800A52 /* WidgetBridgeModule.m */,
+				5A1E0C0D0E0F101112131418 /* AppUpdatesModule.swift */,
+				5A1E0C0D0E0F10111213141A /* AppUpdatesModule.m */,
 			);
 			name = Native;
 			path = Native;
@@ -226,6 +234,7 @@
 				8D1E3F2A4B5C6D7E9F0A1B2C /* StatusItemController.swift */,
 				D2E3F4A5B6C7D8E9F0A1B2C3 /* ControlRequestRelay.swift */,
 				F247C0F0C60E647E3CED4912 /* OneShotSession.swift */,
+				5A1E0C0D0E0F101112131416 /* AppUpdates.swift */,
 			);
 			name = Core;
 			path = Core;
@@ -434,6 +443,9 @@
 				6D69461968676235657D707F /* DeviceSnapshot.swift in Sources */,
 				67375A2D7BC634595E789300 /* ControlStep.swift in Sources */,
 				A1B2C3D4E5F60718293A4B5C /* ControlRequest.swift in Sources */,
+				5A1E0C0D0E0F101112131415 /* AppUpdates.swift in Sources */,
+				5A1E0C0D0E0F101112131417 /* AppUpdatesModule.swift in Sources */,
+				5A1E0C0D0E0F101112131419 /* AppUpdatesModule.m in Sources */,
 				D4E5F60718293A4B5C6D7E8F /* ControlRequestRelay.swift in Sources */,
 				40FF82D82B6C03E05D1B37C2 /* OneShotSession.swift in Sources */,
 			);
@@ -544,8 +556,8 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 0.0.0;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 0.0.0;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -611,8 +623,8 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 0.0.0;
 				COPY_PHASE_STRIP = YES;
+				CURRENT_PROJECT_VERSION = 0.0.0;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;

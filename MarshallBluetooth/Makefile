@@ -1,6 +1,6 @@
 .PHONY: help install pods start run build relaunch app-logs typecheck lint test swift-check swift-test ble-probe app-icon verify clean commit push \
 	desktop-install desktop-build desktop-start desktop-typecheck desktop-dist android-apk ios-pods ios-build \
-	dist release unrelease \
+	dist release unrelease app-install \
 	check-app-duplicate-blocks check-app-ios-project check-app-macos-project check-app-native-boundary check-app-protocol-parity check-code-layout check-makefiles \
 	check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling check-verify
 
@@ -141,6 +141,9 @@ release: verify ## Tag, build, sign and publish the next GitHub release (usage: 
 
 unrelease: ## Delete a GitHub release and its tag (usage: make unrelease v=vX.Y.Z)
 	node .omp/hooks/lib/app-release.ts unrelease $(v)
+
+app-install: ## Install the published release into /Applications as the only registered Roadie (build copies are unregistered)
+	node .omp/hooks/lib/app-release.ts install
 
 # Harness checks — one target per .omp/hooks/post/ hook (rule://root-makefile).
 # Every one is a `verify` prerequisite except check-verify, which runs `verify`.

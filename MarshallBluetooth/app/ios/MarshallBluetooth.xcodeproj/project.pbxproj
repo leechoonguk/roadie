@@ -29,6 +29,9 @@
 		081F51F06151B7B83E401676 /* MarshallBleModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 346346E7CD81B62A22CC3C45 /* MarshallBleModule.m */; };
 		36F23BBD42D22656396FA9CC /* WidgetBridgeModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9CED765FAA12A7A8CBB15BD /* WidgetBridgeModule.swift */; };
 		289ABE975C44E12C98F28629 /* WidgetBridgeModule.m in Sources */ = {isa = PBXBuildFile; fileRef = F5EA48275C52B170C288FD90 /* WidgetBridgeModule.m */; };
+		6B2F0D1E2F30414253647586 /* AppUpdates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B2F0D1E2F30414253647587 /* AppUpdates.swift */; };
+		6B2F0D1E2F30414253647588 /* AppUpdatesModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B2F0D1E2F30414253647589 /* AppUpdatesModule.swift */; };
+		6B2F0D1E2F3041425364758A /* AppUpdatesModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B2F0D1E2F3041425364758B /* AppUpdatesModule.m */; };
 		946330DF65D97D441CB5126F /* ControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16367D7B37CB18C4E7E9A649 /* ControlIntents.swift */; };
 		90EE6B2739570F053A04A4DC /* ControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16367D7B37CB18C4E7E9A649 /* ControlIntents.swift */; };
 		10173A7D2DE30D59325F1A27 /* MarshallWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A84D7BC4F7556156F8D50E1 /* MarshallWidget.swift */; };
@@ -82,6 +85,9 @@
 		346346E7CD81B62A22CC3C45 /* MarshallBleModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = MarshallBleModule.m; path = MarshallBluetooth-macOS/Native/MarshallBleModule.m; sourceTree = "<group>"; };
 		C9CED765FAA12A7A8CBB15BD /* WidgetBridgeModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WidgetBridgeModule.swift; path = MarshallBluetooth-macOS/Native/WidgetBridgeModule.swift; sourceTree = "<group>"; };
 		F5EA48275C52B170C288FD90 /* WidgetBridgeModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = WidgetBridgeModule.m; path = MarshallBluetooth-macOS/Native/WidgetBridgeModule.m; sourceTree = "<group>"; };
+		6B2F0D1E2F30414253647587 /* AppUpdates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppUpdates.swift; path = MarshallBluetooth-macOS/Native/Core/AppUpdates.swift; sourceTree = "<group>"; };
+		6B2F0D1E2F30414253647589 /* AppUpdatesModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppUpdatesModule.swift; path = MarshallBluetooth-macOS/Native/AppUpdatesModule.swift; sourceTree = "<group>"; };
+		6B2F0D1E2F3041425364758B /* AppUpdatesModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = AppUpdatesModule.m; path = MarshallBluetooth-macOS/Native/AppUpdatesModule.m; sourceTree = "<group>"; };
 		16367D7B37CB18C4E7E9A649 /* ControlIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ControlIntents.swift; path = MarshallWidget/ControlIntents.swift; sourceTree = "<group>"; };
 		9A84D7BC4F7556156F8D50E1 /* MarshallWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MarshallWidget.swift; path = MarshallWidget/MarshallWidget.swift; sourceTree = "<group>"; };
 		6C4AFB15A76867BB1ECD3790 /* RoadieWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RoadieWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -187,6 +193,9 @@
 				346346E7CD81B62A22CC3C45 /* MarshallBleModule.m */,
 				C9CED765FAA12A7A8CBB15BD /* WidgetBridgeModule.swift */,
 				F5EA48275C52B170C288FD90 /* WidgetBridgeModule.m */,
+				6B2F0D1E2F30414253647587 /* AppUpdates.swift */,
+				6B2F0D1E2F30414253647589 /* AppUpdatesModule.swift */,
+				6B2F0D1E2F3041425364758B /* AppUpdatesModule.m */,
 				16367D7B37CB18C4E7E9A649 /* ControlIntents.swift */,
 				9A84D7BC4F7556156F8D50E1 /* MarshallWidget.swift */,
 			);
@@ -390,6 +399,9 @@
 				081F51F06151B7B83E401676 /* MarshallBleModule.m in Sources */,
 				36F23BBD42D22656396FA9CC /* WidgetBridgeModule.swift in Sources */,
 				289ABE975C44E12C98F28629 /* WidgetBridgeModule.m in Sources */,
+				6B2F0D1E2F30414253647586 /* AppUpdates.swift in Sources */,
+				6B2F0D1E2F30414253647588 /* AppUpdatesModule.swift in Sources */,
+				6B2F0D1E2F3041425364758A /* AppUpdatesModule.m in Sources */,
 				946330DF65D97D441CB5126F /* ControlIntents.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

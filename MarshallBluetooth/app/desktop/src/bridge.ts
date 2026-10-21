@@ -4,6 +4,7 @@
  */
 import type { ControlAction } from '../../src/controls';
 import type { WidgetPayload } from '../../src/native/widgetBridge';
+import type { UpdateInfo } from '../../src/native/appUpdates';
 
 export const CHANNELS = {
   /** Window → main: start a Web Bluetooth device request with a user gesture. */
@@ -18,6 +19,10 @@ export const CHANNELS = {
   publish: 'roadie:publish',
   /** Main → window: a tray menu item asks for a change on the speaker. */
   control: 'roadie:control',
+  /** Window → main (invoke): the running version and whether this install can update itself. */
+  updateInfo: 'roadie:update-info',
+  /** Window → main: the window's Check for Updates button. */
+  checkForUpdates: 'roadie:check-for-updates',
 };
 
 /** One entry of Electron's `select-bluetooth-device` list. */
@@ -40,4 +45,6 @@ export interface RoadieBridge {
   publish(payload: WidgetPayload): void;
   onDevices(listener: (devices: ChooserDevice[]) => void): void;
   onControl(listener: (request: ControlRequest) => void): void;
+  updateInfo(): Promise<UpdateInfo>;
+  checkForUpdates(): void;
 }
