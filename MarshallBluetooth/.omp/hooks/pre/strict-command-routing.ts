@@ -125,7 +125,7 @@ const denylist: Array<{
   {
     desc: "npm ci/install 직접 실행",
     pattern: new RegExp(`${atCmdStart("npm")}\\s+(?:ci|install|i)(?:\\s*$|\\s*[&|;)])`),
-    target: "make install",
+    target: "make install (app/) / make desktop-install (app/desktop/)",
   },
   {
     desc: "React Native CLI 직접 실행",
@@ -140,12 +140,35 @@ const denylist: Array<{
   {
     desc: "CocoaPods 직접 실행",
     pattern: new RegExp(`${atCmdStart("pod")}\\s+install\\b`),
-    target: "make pods",
+    target: "make pods (macOS) / make ios-pods (iOS)",
   },
   {
     desc: "xcodebuild 직접 실행",
     pattern: new RegExp(`${atCmdStart("xcodebuild")}(?:\\s|$)`),
-    target: "make build",
+    target: "make build (macOS) / make ios-build (iOS)",
+  },
+  {
+    // The bundle's resolution (react-native-web, the platform swaps) lives in build.ts; a
+    // hand-run esbuild or electron-builder packages something the gate never built.
+    desc: "데스크톱 번들러 직접 실행",
+    pattern: new RegExp(`${atCmdStart("node")}\\s+\\S*desktop/build\\.ts\\b`),
+    target: "make desktop-build",
+  },
+  {
+    desc: "electron-builder 직접 실행",
+    pattern: new RegExp(`${atCmdStart("(?:npx\\s+)?electron-builder")}(?:\\s|$)`),
+    target: "make desktop-dist",
+  },
+  {
+    desc: "Electron 직접 실행",
+    pattern: new RegExp(`${atCmdStart("(?:npx\\s+)?electron")}\\s+\\.(?:\\s|$)`),
+    target: "make desktop-start",
+  },
+  {
+    // The version comes from the tag through -ProadieVersionName; a bare gradlew build ships 0.0.0.
+    desc: "Gradle 직접 실행",
+    pattern: new RegExp(`${atCmdStart("gradlew")}(?:\\s|$)`),
+    target: "make android-apk",
   },
   {
     desc: "Script 직접 실행",

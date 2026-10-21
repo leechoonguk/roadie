@@ -37,8 +37,8 @@ struct MarshallProvider: TimelineProvider {
 ///
 /// Small: the volume with −/+. Medium: volume beside the two tone bands.
 /// Large: every control with its own buttons and a Flat reset. Buttons run
-/// `StepControlIntent`, which hands the change to the menu bar app — the widget
-/// itself never talks Bluetooth.
+/// `StepControlIntent`, which hands the change to the menu bar app on macOS,
+/// and on iOS connects to the speaker for that one press (`WidgetPress`).
 ///
 /// One control language throughout: a round 28pt button either side of the
 /// thing it moves, the value between them, a bar underneath. Colour never
@@ -50,8 +50,20 @@ struct MarshallWidgetView: View {
   let entry: MarshallEntry
 
   private var snapshot: DeviceSnapshot { entry.snapshot }
-  /// Buttons act only on a live speaker; a sample or a disconnected one shows read-only.
-  private var adjustable: Bool { snapshot.isConnected && !entry.isSample }
+  /// The sample is read-only. On macOS a press goes through the menu bar app's
+  /// connection, so it needs one; on iOS a press connects for itself.
+  private var adjustable: Bool {
+    #if os(iOS)
+      !entry.isSample
+    #else
+      snapshot.isConnected && !entry.isSample
+    #endif
+  }
+
+  /// Whether `action` would change anything — the same rule the press itself applies.
+  private func enabled(_ action: ControlAction) -> Bool {
+    adjustable && action.change(from: snapshot.controls) != nil
+  }
 
   var body: some View {
     Group {
@@ -94,7 +106,7 @@ struct MarshallWidgetView: View {
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .opacity(snapshot.isConnected || entry.isSample ? 1 : 0.6)
+    .opacity(adjustable || entry.isSample ? 1 : 0.6)
     .containerBackground(.fill.tertiary, for: .widget)
     .accessibilityElement(children: .contain)
     .accessibilityLabel(summary)
@@ -171,7 +183,7 @@ struct MarshallWidgetView: View {
           .background(Capsule().fill(.fill.secondary))
       }
       .buttonStyle(.plain)
-      .disabled(!adjustable || (snapshot.bass == EQScale.flat && snapshot.treble == EQScale.flat))
+      .disabled(!enabled(.flat))
       .accessibilityLabel("Reset tone to flat")
     }
   }
@@ -214,7 +226,7 @@ struct MarshallWidgetView: View {
     }
     .buttonStyle(.plain)
     .widgetAccentable()
-    .disabled(!adjustable)
+    .disabled(!enabled(control.action(step: step)))
     .accessibilityLabel("\(control.rawValue) \(step > 0 ? "up" : "down")")
   }
 
@@ -279,7 +291,7 @@ struct MarshallStatusWidget: Widget {
       MarshallWidgetView(entry: entry)
     }
     .configurationDisplayName("Roadie")
-    .description("Volume and EQ of your Marshall speaker, adjustable from the desktop.")
+    .description("Volume and EQ of your Marshall speaker, adjustable from the widget.")
     .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
 }

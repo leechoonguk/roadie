@@ -36,7 +36,7 @@ import { resolveProjectRoot, WALK_EXCLUDES } from "../lib/hook-project-root.ts";
 const projectRoot = resolveProjectRoot();
 
 /** Text assets held to the whitespace standard. */
-const HYGIENE_EXTENSIONS = [".ts", ".tsx", ".js", ".mjs", ".swift", ".m", ".h", ".md", ".yml", ".yaml", ".css"];
+const HYGIENE_EXTENSIONS = [".ts", ".tsx", ".js", ".mjs", ".swift", ".m", ".h", ".kt", ".md", ".yml", ".yaml", ".css", ".html"];
 
 /** An intention parked in a comment is never found again. */
 const WORK_MARKER = /\b(TODO|FIXME|XXX|HACK)\b/;
@@ -64,11 +64,24 @@ const TS_FIELD = /^\s{2,}(?:public\s+|private\s+|protected\s+|static\s+|readonly
 /** Every executable source extension of the JS side. */
 const SCRIPT_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 
-/** Native source extensions: Swift and the Objective-C bridge files. */
-const NATIVE_EXTENSIONS = [".swift", ".m", ".h"];
+/** Native source extensions: Swift, the Objective-C bridge files, and the Android shell's Kotlin. */
+const NATIVE_EXTENSIONS = [".swift", ".m", ".h", ".kt"];
 
-/** Native source roots: the shared store, the app target (core + adapters), the widget. */
-const NATIVE_ROOTS = ["app/macos/Shared", "app/macos/MarshallBluetooth-macOS", "app/macos/MarshallWidget"];
+/**
+ * Native source roots: the shared store, the macOS app target (core +
+ * adapters), the widget, and the two mobile shells — the iOS app's own tree
+ * and the Android app's Kotlin.
+ */
+const NATIVE_ROOTS = [
+  "app/macos/Shared",
+  "app/macos/MarshallBluetooth-macOS",
+  "app/macos/MarshallWidget",
+  "app/ios/MarshallBluetooth",
+  "app/android/app/src/main/java",
+];
+
+/** The JS platform trees: the Windows/Linux app and the Android-only modules. */
+const PLATFORM_ROOTS = ["app/desktop/src", "app/mobile/src"];
 
 interface ClassBlock {
   name: string;
@@ -117,6 +130,7 @@ export function checkCodeLayoutSync(): string[] {
     join(projectRoot, ".omp", "extensions"),
     join(projectRoot, "app", "src"),
     join(projectRoot, "app", "__tests__"),
+    ...PLATFORM_ROOTS.map((root) => join(projectRoot, root)),
   ];
   // Package-root files are code too: the entry points and the tool config
   // (babel, metro, jest, eslint, prettier). They are not walked recursively —
@@ -124,6 +138,8 @@ export function checkCodeLayoutSync(): string[] {
   const scriptPaths = [
     ...scriptRoots.flatMap((root) => walk(root, SCRIPT_EXTENSIONS)),
     ...walk(join(projectRoot, "app"), SCRIPT_EXTENSIONS, false),
+    // The desktop package's root holds its bundler script.
+    ...walk(join(projectRoot, "app", "desktop"), SCRIPT_EXTENSIONS, false),
   ];
   for (const path of scriptPaths) {
     const source = readFileSync(path, "utf-8");
@@ -151,6 +167,7 @@ function hygieneFiles(): string[] {
   const roots = [
     join(projectRoot, "app", "src"),
     join(projectRoot, "app", "__tests__"),
+    ...PLATFORM_ROOTS.map((root) => join(projectRoot, root)),
     ...NATIVE_ROOTS.map((root) => join(projectRoot, root)),
     join(projectRoot, ".omp", "rules"),
     join(projectRoot, ".omp", "hooks"),
@@ -161,6 +178,9 @@ function hygieneFiles(): string[] {
     join(projectRoot, "Makefile"),
     join(projectRoot, "app", "App.tsx"),
     join(projectRoot, "app", "index.js"),
+    join(projectRoot, "app", "metro.config.js"),
+    join(projectRoot, "app", "react-native.config.js"),
+    join(projectRoot, "app", "desktop", "build.ts"),
     join(projectRoot, "app", "macos", "Podfile"),
     join(projectRoot, ".omp", "AGENTS.md"),
     join(projectRoot, ".omp", "RULES.md"),

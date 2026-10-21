@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { type DeviceRow, displayName, EQ_FLAT, EQ_MAX, FALLBACK_MAX_VOLUME } from '../devices';
+import { offsetFromFlat } from '../controls';
 import { colors, space } from '../theme';
 import { LevelSlider } from './LevelSlider';
 
@@ -39,10 +40,6 @@ export function SpeakerPanel({
   // An EQ write carries both bands, so neither can move until both are known.
   const eqKnown = bass !== undefined && treble !== undefined;
   const flat = bass === EQ_FLAT && treble === EQ_FLAT;
-  const offset = (step: number) => {
-    const delta = step - EQ_FLAT;
-    return delta > 0 ? `+${delta}` : String(delta);
-  };
 
   return (
     <ScrollView style={styles.pane} contentContainerStyle={styles.content}>
@@ -107,7 +104,7 @@ export function SpeakerPanel({
           max={EQ_MAX}
           marker={EQ_FLAT}
           disabled={!row.isConnected || !eqKnown}
-          formatValue={offset}
+          formatValue={offsetFromFlat}
           onChange={step => treble !== undefined && onEQ(step, treble)}
         />
         <LevelSlider
@@ -116,7 +113,7 @@ export function SpeakerPanel({
           max={EQ_MAX}
           marker={EQ_FLAT}
           disabled={!row.isConnected || !eqKnown}
-          formatValue={offset}
+          formatValue={offsetFromFlat}
           onChange={step => bass !== undefined && onEQ(bass, step)}
         />
       </View>

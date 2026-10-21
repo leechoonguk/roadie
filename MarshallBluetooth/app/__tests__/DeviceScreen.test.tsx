@@ -110,6 +110,22 @@ test('a search that finds nothing ends on its own and can be started again', asy
   expect(marshallBle.startScan).toHaveBeenCalledTimes(2);
 });
 
+test('searching again forgets a speaker that never connected until it advertises again', async () => {
+  jest.useFakeTimers();
+  const renderer = await render();
+  await emit('deviceDiscovered', acton);
+  await ReactTestRenderer.act(async () => {
+    jest.advanceTimersByTime(SEARCH_TIMEOUT_MS);
+  });
+
+  await press(renderer, 'Search Again');
+  expect(textOf(renderer, 'empty-list')).toContain('Looking for your Marshall speaker');
+
+  await emit('deviceDiscovered', acton);
+  const texts = renderer.root.findAllByType(Text).map(node => [node.props.children].flat().join(''));
+  expect(texts).toContain('ACTON III');
+});
+
 test('the first controllable speaker is selected and connected without a click', async () => {
   const renderer = await render();
 

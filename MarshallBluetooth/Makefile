@@ -1,10 +1,13 @@
 .PHONY: help install pods start run build relaunch app-logs typecheck lint test swift-check swift-test ble-probe app-icon verify clean commit push \
+	desktop-install desktop-build desktop-start desktop-typecheck desktop-dist android-apk ios-pods ios-build \
 	dist release unrelease \
-	check-app-duplicate-blocks check-app-macos-project check-app-native-boundary check-code-layout check-makefiles \
+	check-app-duplicate-blocks check-app-ios-project check-app-macos-project check-app-native-boundary check-app-protocol-parity check-code-layout check-makefiles \
 	check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling check-verify
 
 APP := app
 MACOS := $(APP)/macos
+# The Windows/Linux app: Electron over the same React screens (react-native-web).
+DESKTOP := $(APP)/desktop
 SCHEME := MarshallBluetooth-macOS
 WORKSPACE := $(MACOS)/MarshallBluetooth.xcworkspace
 # The product the app target builds (its PRODUCT_NAME), and where Xcode put it.
@@ -82,7 +85,35 @@ ble-probe: ## Drive the BLE core against a real speaker from the terminal (ARGS=
 app-icon: ## Render the app icon into the asset catalog from its Swift drawing (CoreTests/Icon)
 	swift run --package-path $(MACOS)/CoreTests roadie-icon $(MACOS)/MarshallBluetooth-macOS/Assets.xcassets/AppIcon.appiconset
 
-verify: lint typecheck test swift-check swift-test check-app-duplicate-blocks check-app-macos-project check-app-native-boundary check-code-layout check-makefiles check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling ## Run every gate that runs without Xcode
+# Windows and Linux (rule://root-makefile). Electron and electron-builder run on
+# any OS, but an installer is built for the OS it runs on — CI builds both.
+desktop-install: ## Install the Windows/Linux desktop app's dependencies (npm ci in app/desktop)
+	cd $(DESKTOP) && npm ci
+
+desktop-build: ## Bundle the Windows/Linux desktop app (main, preload, window) into app/desktop/out
+	node app/desktop/build.ts
+
+desktop-start: desktop-build ## Run the desktop app from its bundle (Windows/Linux; on macOS use `make run`)
+	cd $(DESKTOP) && npx electron .
+
+desktop-typecheck: ## Type-check the desktop app against DOM, Node and Web Bluetooth types
+	cd $(DESKTOP) && npx tsc --noEmit -p tsconfig.json
+
+desktop-dist: desktop-build ## Package this OS's installers into app/desktop/release (usage: make desktop-dist v=x.y.z)
+	cd $(DESKTOP) && npx electron-builder --publish never $(if $(v),-c.extraMetadata.version=$(v))
+
+# iOS and Android (rule://root-makefile): the same screens on React Native, with
+# Bluetooth over react-native-ble-plx (app/mobile/src). `make start` serves both.
+android-apk: ## Build the Android APK, release-built and signed with the template's debug key (requires the Android SDK and JDK 17; v=x.y.z sets the version)
+	cd $(APP)/android && ./gradlew assembleRelease $(if $(v),-ProadieVersionName=$(v))
+
+ios-pods: ## Install CocoaPods for the iOS app (requires Xcode)
+	cd $(APP)/ios && pod install
+
+ios-build: ## Build the iOS app for the simulator, unsigned (requires Xcode and `make ios-pods`; a device build is signed in Xcode)
+	xcodebuild -workspace $(APP)/ios/MarshallBluetooth.xcworkspace -scheme MarshallBluetooth -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
+
+verify: lint typecheck test swift-check swift-test check-app-duplicate-blocks check-app-ios-project check-app-macos-project check-app-native-boundary check-app-protocol-parity check-code-layout check-makefiles check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling ## Run every gate that runs without Xcode
 
 clean: ## Remove build output and caches
 	rm -rf $(MACOS)/build $(MACOS)/CoreTests/.build $(APP)/coverage
@@ -116,11 +147,17 @@ unrelease: ## Delete a GitHub release and its tag (usage: make unrelease v=vX.Y.
 check-app-duplicate-blocks: ## Check app/ sources for duplicated block runs (stale rewrite + partial edits)
 	node .omp/hooks/post/check-app-duplicate-blocks.ts
 
+check-app-ios-project: ## Check the iOS Xcode project (shared sources in both targets, group. App Group, presses in the app, Bluetooth, embed, team)
+	node .omp/hooks/post/check-app-ios-project.ts
+
 check-app-macos-project: ## Check the Xcode project (target membership, team signing, App Group, names, menu bar residency)
 	node .omp/hooks/post/check-app-macos-project.ts
 
 check-app-native-boundary: ## Check the React Native ↔ Swift boundary (React-free core/shared/widget, thin adapters)
 	node .omp/hooks/post/check-app-native-boundary.ts
+
+check-app-protocol-parity: ## Check that Swift and TypeScript agree on the GATT UUIDs, scales, product names and press model
+	node .omp/hooks/post/check-app-protocol-parity.ts
 
 check-code-layout: ## Check code layout (comments, TS file layout, member order, whitespace)
 	node .omp/hooks/post/check-code-layout.ts

@@ -6,6 +6,7 @@ globs:
       - Makefile
       - app/**/*.ts
       - app/macos/**/*.swift
+      - app/ios/**/*.swift
 alwaysApply: false
 ---
 
@@ -29,13 +30,21 @@ scan) and `check-omp-types.ts` (the harness type-checks).
 | Session-lifetime behaviour | `.omp/extensions/<name>/*.ts` | the extension runner — **auto-loaded**, never invoked |
 | App code | `app/App.tsx`, `app/index.js`, `app/src/**`, `app/__tests__/**`, package-root config | Metro, tsc, eslint, jest |
 | Native code | `app/macos/**/*.swift` and the `Native/*.m` bridge files | Xcode, `make swift-check` |
+| iOS app shell | `app/ios/**/*.swift` (the React Native template's `AppDelegate`) | Xcode, `make ios-build` |
+| Android app shell | `app/android/**/*.kt` (the template's `MainActivity`/`MainApplication`, the widget's empty `RoadieWidget` provider) and Gradle files | Gradle, `make android-apk` |
 
 - **No Python, Ruby or shell scripts.** Each needs a second toolchain to answer
   one question, and `node` already runs the harness — it strips TypeScript types
   natively, so a `.ts` file is directly executable. The CocoaPods `Podfile` and
   the Bundler `Gemfile` are manifests (no extension), not scripts.
-- **Native sources live under `app/macos/`.** A `.swift`, `.m`, `.mm` or `.h`
-  anywhere else is compiled by no target and no gate.
+- **Native sources live under `app/macos/` or `app/ios/`.** A `.swift`, `.m`,
+  `.mm` or `.h` anywhere else is compiled by no target and no gate. The mobile
+  apps carry no logic of their own: iOS compiles the macOS Swift
+  (`app/macos/Shared/`, `Native/`, `MarshallWidget/`) through references in
+  its Xcode project, and Android runs the shared TypeScript client over
+  react-native-ble-plx (`app/mobile/src/`). So the Android Kotlin is the
+  template's two entry classes plus the widget's empty provider class, and the
+  Gradle wrapper (`gradlew`) is vendored, not written here.
 - **`.omp/hooks/` and `.omp/extensions/` are TypeScript only.** Hooks and libs
   import each other, so a stray `.js`/`.mjs` breaks the import graph and the
   type contract.
@@ -77,7 +86,7 @@ modules under `.omp/hooks/` use `hook:<type>:<tool>:<name>` ids instead
 ## Never Do These
 
 - Write a Python, Ruby or shell script for a check, a runner or a fixture
-- Put Swift or Objective-C outside `app/macos/`
+- Put Swift or Objective-C outside `app/macos/` and `app/ios/`
 - Put a `.js`/`.mjs` file under `.omp/hooks/` or `.omp/extensions/`
 - Create a project-root `scripts/`, `tools/`, `bin/` or `utils/` directory
 - Run a check through anything but `node`

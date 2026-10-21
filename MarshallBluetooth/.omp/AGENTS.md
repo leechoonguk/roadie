@@ -2,10 +2,19 @@
 
 ## Overview
 
-**Roadie** — a macOS menu bar app for Marshall Bluetooth speakers: React Native
-0.83 + react-native-macos 0.83 (TypeScript, npm) for the window, Swift over
-CoreBluetooth for the speaker, and a WidgetKit extension whose buttons adjust
-volume and tone from the desktop. The prior reverse-engineering report of the
+**Roadie** — volume and tone of a Marshall Bluetooth speaker, on six
+platforms from one set of React Native screens (TypeScript, npm):
+
+| Platform | Window | Bluetooth | Widget |
+|---|---|---|---|
+| macOS | react-native-macos 0.83, menu bar app | Swift over CoreBluetooth | WidgetKit, through the resident app |
+| iOS | React Native 0.83 | the same Swift, compiled again | the same WidgetKit sources; a press connects for itself |
+| Windows, Linux | Electron + react-native-web | `src/ble/client.ts` over Web Bluetooth | the tray menu |
+| Android | React Native 0.83 | `src/ble/client.ts` over react-native-ble-plx | react-native-android-widget; a press connects for itself |
+
+One Bluetooth core per language: Swift for Apple platforms, TypeScript for the
+rest, held to each other by rule://app-protocol-parity; the layers and swaps
+are rule://app-native-boundary. The prior reverse-engineering report of the
 official Marshall app is `README.md` at the project root (kept verbatim).
 
 The `make verify` gate runs without Xcode; `make build`, `make relaunch`,
@@ -19,20 +28,36 @@ tests it.
 Makefile                      the only entry point (rule://root-makefile)
 README.md                     prior reverse-engineering report (do not edit)
 app/                          React Native + react-native-macos, TypeScript, npm
-  App.tsx, index.js           entry points
-  src/native/*.ts             typed wrappers over NativeModules (MarshallBle, WidgetBridge)
+  App.tsx, index.js           entry points (index.js also registers background tasks)
+  metro.config.js             Android swaps of src/native/* → mobile/src/
+  react-native.config.js      keeps Android-only libraries out of the Apple builds
+  src/native/*.ts             typed wrappers over NativeModules (MarshallBle, WidgetBridge) — the API every platform implements
+  src/ble/client.ts           that API over any JS Bluetooth transport (Windows, Linux, Android)
+  src/protocol.ts             GATT UUIDs and value codecs (TypeScript half; Swift half in macos/)
+  src/controls.ts             the press model: ControlAction, stepControl
+  src/theme.ts                AppKit, UIKit or a fixed palette, per platform
   src/screens/*.tsx           screens
-  __tests__/                  jest tests
+  __tests__/                  jest tests (shared modules, each platform's transport, the Android widget)
+  desktop/                    Windows/Linux: Electron package (own package.json; rule://tooling)
+    build.ts                  esbuild bundle: react-native → react-native-web, src/native/* swapped
+    src/main.ts               main process and the tray menu (the widget's counterpart)
+    src/renderer/             Web Bluetooth transport, tray bridge, react-native shim
+  mobile/src/                 Android only: ble-plx transport, the home screen widget
+  android/                    React Native template project; widget provider + manifest
+  ios/                        iOS Xcode project compiling the macOS Swift (rule://app-ios-project)
+    MarshallBluetooth/        the template's AppDelegate, Info.plist, entitlements
+    RoadieWidget/             the widget extension's Info.plist and entitlements (sources from macos/)
   macos/
     Podfile
     MarshallBluetooth.xcodeproj                    targets, signing, App Group (rule://app-macos-project)
-    Shared/*.swift                                 compiled into both the app and the widget
+    Shared/*.swift                                 compiled into both the app and the widget (on macOS and iOS)
     MarshallBluetooth-macOS/AppDelegate.swift      menu bar app entry (Roadie.app)
-    MarshallBluetooth-macOS/Native/Core/*.swift    React-free core: BLE, status item, widget request relay
+    MarshallBluetooth-macOS/Native/Core/*.swift    React-free core: BLE, status item, widget request relay, one-shot press (iOS)
     MarshallBluetooth-macOS/Native/*.swift, *.m    RN native module adapters (Swift + ObjC RCT_EXTERN)
     MarshallWidget/*.swift, Info.plist, *.entitlements   WidgetKit extension and its App Intents
     CoreTests/                                     SwiftPM: Swift tests, BLE probe, icon renderer
 .omp/                         rules/ hooks/ extensions/ skills/ (this harness)
+../.github/workflows/         CI at the repository root: desktop.yml, native.yml (rule://release)
 ```
 
 The boundary between those layers — what may import React, where CoreBluetooth
@@ -45,9 +70,11 @@ the Git repository root is the parent directory and holds other projects.
 
 | Need | Command |
 |---|---|
-| Install | `make install` |
-| Unit gates while working | `make lint`, `make typecheck`, `make test`, `make swift-check`, `make swift-test` |
+| Install | `make install` (app, CocoaPods for macOS), `make desktop-install`, `make ios-pods` |
+| Unit gates while working | `make lint`, `make typecheck`, `make test`, `make swift-check`, `make swift-test`, `make desktop-typecheck` |
 | Run the app as built (Xcode) | `make start` once, then `make relaunch`; `make app-logs` to follow widget → app |
+| Windows/Linux app | `make desktop-start`; installers with `make desktop-dist v=x.y.z` (this OS only — CI builds both) |
+| Android APK, iOS build | `make android-apk v=x.y.z` (Android SDK, JDK 17); `make ios-build` (Xcode, simulator) |
 | Talk to the speaker without the app | `make ble-probe ARGS="--target ACTON --raw"` |
 | One harness check | `make check-<name>` (listed by `make help`) |
 | The whole gate | `make verify` — runs once, at commit, through `make commit` |

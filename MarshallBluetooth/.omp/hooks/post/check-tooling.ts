@@ -20,7 +20,8 @@ import { resolveProjectRoot, WALK_EXCLUDES } from "../lib/hook-project-root.ts";
  *      thin Objective-C bridge files (`app/macos/`). No Python, Ruby or shell
  *      script exists anywhere: each needs a second toolchain to run one check.
  *   2. Native sources (`.swift`, `.m`, `.mm`, `.h`) live under `app/macos/`,
- *      where the Xcode targets and `make swift-check` compile them.
+ *      where the Xcode targets and `make swift-check` compile them, or under
+ *      `app/ios/`, the iOS app's Xcode project (`make ios-build`).
  *   3. `.omp/hooks/` and `.omp/extensions/` are TypeScript only — hooks and
  *      libs import each other.
  *   4. Scripts live in `.omp/hooks/`, `.omp/extensions/` or `app/`; a root
@@ -39,9 +40,9 @@ const projectRoot = resolveProjectRoot();
 /** Script languages that need a toolchain this project does not have. */
 const FORBIDDEN_SCRIPTS = /\.(py|rb|sh|bash|zsh)$/;
 
-/** Native source extensions, all compiled from `app/macos/`. */
+/** Native source extensions, all compiled from an Xcode project under one of `NATIVE_ROOTS`. */
 const NATIVE_SOURCES = /\.(swift|m|mm|h)$/;
-const NATIVE_ROOT = "app/macos/";
+const NATIVE_ROOTS = ["app/macos/", "app/ios/"];
 
 /** Where script code may live at all. */
 const SCRIPT_ROOTS = [".omp/hooks/", ".omp/extensions/", "app/"];
@@ -95,8 +96,8 @@ export function checkToolingSync(): string[] {
           "belongs in .omp/hooks/ as TypeScript behind a make target (tooling.md)",
       );
     }
-    if (NATIVE_SOURCES.test(path) && !path.startsWith(NATIVE_ROOT)) {
-      issues.push(`${path}: native source outside app/macos/ — no Xcode target or make swift-check compiles it`);
+    if (NATIVE_SOURCES.test(path) && !NATIVE_ROOTS.some((root) => path.startsWith(root))) {
+      issues.push(`${path}: native source outside app/macos/ and app/ios/ — no Xcode target or make swift-check compiles it`);
     }
     if (/^\.omp\/(hooks|extensions)\//.test(path) && !path.endsWith(".ts")) {
       issues.push(`${path}: .omp/hooks/ and .omp/extensions/ are TypeScript only — the modules import each other`);

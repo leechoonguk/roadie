@@ -9,6 +9,11 @@ globs:
       - app/src/**/*.ts
       - app/src/**/*.tsx
       - app/App.tsx
+      - app/desktop/build.ts
+      - app/desktop/src/**/*.ts
+      - app/mobile/src/**/*.ts
+      - app/mobile/src/**/*.tsx
+      - app/metro.config.js
 alwaysApply: false
 ---
 
@@ -34,8 +39,26 @@ gates read. The Xcode project itself is checked as files by rule://app-macos-pro
 | Bridge files | `app/macos/MarshallBluetooth-macOS/Native/*.m` | `RCT_EXTERN_MODULE`/`RCT_EXTERN_METHOD` declarations of the adapter of the same stem | `<React/...>` headers |
 | Widget | `app/macos/MarshallWidget/*.swift` | The WidgetKit extension, reading the shared store | SwiftUI, WidgetKit — never React, never CoreBluetooth |
 | Core tests | `app/macos/CoreTests/` | `Package.swift`, `Sources/MarshallCore/` (symlinks to `Shared/` and `Native/Core/`), `Tests/*.swift` — the Swift Testing suite `make swift-test` runs | Foundation, Testing, `@testable import MarshallCore` — never React, never CoreBluetooth |
-| JS wrappers | `app/src/native/*.ts` | One typed wrapper per native module (`MarshallBle`, `WidgetBridge`) | `react-native` (`NativeModules`, `NativeEventEmitter`) |
+| JS wrappers | `app/src/native/*.ts` | One typed wrapper per native module (`MarshallBle`, `WidgetBridge`) — the API every platform implements | `react-native` (`NativeModules`, `NativeEventEmitter`) |
+| JS Bluetooth | `app/src/ble/client.ts`, `app/src/protocol.ts`, `app/src/controls.ts` | The same `marshallBle` API over a `BleTransport`, the GATT codec, and the press model (`stepControl`) — for the platforms without the Swift core | `react-native`-free TypeScript |
+| JS transports | `app/desktop/src/renderer/*.ts` (Web Bluetooth, Windows/Linux), `app/mobile/src/*.ts(x)` (react-native-ble-plx and the widget, Android) | How to scan and open a GATT link, and what stands in for the widget; swapped in for `app/src/native/*` by `desktop/build.ts` and `metro.config.js` | their platform's stack — never the decoding or the press rules, which are the shared files above |
 | Screens | `app/src/screens/*.tsx`, `app/App.tsx` | UI | the wrappers in `app/src/native/` — never `NativeModules` |
+
+## Platforms
+
+| Platform | Bluetooth | Widget |
+|---|---|---|
+| macOS | Swift core (`MarshallScanner`) through `MarshallBle` | WidgetKit; a press queues a `ControlChange` for the resident app (`ControlRequestRelay`) |
+| iOS | the same Swift sources, compiled by `app/ios/MarshallBluetooth.xcodeproj` | the same WidgetKit sources; a press runs in the app's process and connects for itself (`OneShotSession`) |
+| Windows, Linux | `src/ble/client.ts` over Web Bluetooth | the tray menu; a press goes through `applyStep` |
+| Android | `src/ble/client.ts` over react-native-ble-plx | `mobile/src/widget.tsx`; a press runs as a background task through `applyStep` |
+
+A press is one model in two languages — `ControlAction`/`ControlChange` in
+`Shared/ControlStep.swift` and `src/controls.ts` — with the same test cases
+(`ControlStepTests.swift`, `controls.test.ts`). Each surface draws a step at
+once and then shows what the speaker stored; a press that connects for itself
+steps from the value the speaker reports then, not from the one it was drawn
+with.
 
 ## Conventions
 
@@ -45,7 +68,10 @@ gates read. The Xcode project itself is checked as files by rule://app-macos-pro
   the widget extension's link.
 - **One central.** `import CoreBluetooth` appears only under `Native/Core/`. An
   adapter that scans is untested logic; a widget that scans is a second central
-  fighting the app for the speaker.
+  fighting the app for the speaker. The one second `MarshallScanner` is
+  `OneShotSession`'s, for an iOS widget press: it never scans, it connects to
+  the speaker the system already knows, and CoreBluetooth shares that link with
+  the window's.
 - **Bridge files declare, never implement.** A `Native/*.m` holds `#import`,
   comments, `RCT_EXTERN_MODULE`, `RCT_EXTERN_METHOD` (a signature may wrap
   across lines) and `@end` — no `@implementation`, no `{` body — and its stem
@@ -78,7 +104,18 @@ gates read. The Xcode project itself is checked as files by rule://app-macos-pro
   speaker (`--raw` to watch values move as a knob turns, `--write` to confirm a
   value sticks) and is pinned in `CoreTests/Tests/` with the captured bytes. A
   constant with no capture behind it is a guess the speaker will refuse.
-
+- **A swap keeps the wrapper's shape.** `app/desktop/build.ts` (Windows/Linux)
+  and `app/metro.config.js` (Android) replace `app/src/native/*` modules. Each
+  replacement exists and exports every runtime name of the module it replaces,
+  and a wrapper that reads `NativeModules` is replaced on both — neither bundle
+  is built by `make verify`, so a missing export or swap fails only at launch.
+- **One implementation per language.** Files under `app/desktop/src/` and
+  `app/mobile/src/` are transports (how to scan, how to open a GATT link) and
+  surfaces (the tray, the Android widget). None declares a name that
+  `app/src/protocol.ts`, `app/src/controls.ts` or `app/src/ble/client.ts`
+  exports: a second decoder or step rule drifts from the shared one, and the
+  shared tests no longer cover it. The Swift half is held to the TypeScript one
+  by rule://app-protocol-parity.
 ## Adding a Native Capability
 
 1. If the capability talks to the speaker, capture the characteristic with

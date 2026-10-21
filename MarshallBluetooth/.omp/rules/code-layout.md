@@ -6,8 +6,14 @@ globs:
       - app/src/**/*.ts
       - app/src/**/*.tsx
       - app/__tests__/**/*.tsx
+      - app/desktop/build.ts
+      - app/desktop/src/**/*.ts
+      - app/mobile/src/**/*.ts
+      - app/mobile/src/**/*.tsx
       - app/macos/**/*.swift
       - app/macos/**/*.m
+      - app/ios/MarshallBluetooth/*.swift
+      - app/android/app/src/main/java/**/*.kt
       - .omp/hooks/**/*.ts
       - .omp/extensions/**/*.ts
 alwaysApply: false
@@ -29,8 +35,10 @@ harness's own hooks and extensions. Machine-checked by `check-code-layout.ts`
 | Surface | Comments | File layout | Class member order | Whitespace |
 |---|---|---|---|---|
 | `app/src/**`, `app/__tests__/**`, `app/*.tsx`, `app/*.js` | yes | yes | yes | yes |
+| `app/desktop/src/**`, `app/desktop/build.ts`, `app/mobile/src/**` (the Windows/Linux and Android platform files) | yes | yes | yes | yes |
 | `.omp/hooks/**`, `.omp/extensions/**` | yes + JSDoc header | yes | yes | yes |
 | `app/macos/Shared/`, `MarshallBluetooth-macOS/`, `MarshallWidget/` (`.swift`, `.m`, `.h`) | yes | — (Swift's own conventions; `swift-check` reads it) | — | yes |
+| The mobile shells: `app/ios/MarshallBluetooth/` (`.swift`), `app/android/app/src/main/java/` (`.kt`) | yes | — (the React Native template's own layout) | — | yes |
 | `.omp/rules`, `.omp/skills`, `AGENTS.md`, `RULES.md`, `Makefile`, `Podfile` | — | — | — | yes |
 
 The prior reverse-engineering report (`README.md`) is kept verbatim and is not

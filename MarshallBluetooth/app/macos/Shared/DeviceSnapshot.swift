@@ -84,6 +84,22 @@ struct SharedStore {
   func remove(_ name: String) {
     try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
   }
+
+  /// Runs `body` holding an exclusive `flock` on the file `name`.
+  ///
+  /// An atomic write keeps a file whole, but a read-modify-write in the widget
+  /// can still interleave with the app's drain and lose a request; the lock
+  /// serialises the two processes. When the lock file cannot be opened, `body`
+  /// runs unlocked: a lost request beats a widget that stops working.
+  func withLock<Result>(_ name: String, _ body: () throws -> Result) rethrows -> Result {
+    try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let descriptor = open(directory.appendingPathComponent(name).path, O_RDWR | O_CREAT, 0o644)
+    guard descriptor >= 0 else { return try body() }
+    defer { close(descriptor) }
+    flock(descriptor, LOCK_EX)
+    defer { flock(descriptor, LOCK_UN) }
+    return try body()
+  }
 }
 
 /// The single published snapshot.

@@ -65,15 +65,19 @@ export function checkFileForDuplicates(absPath: string, displayPath: string): st
   ];
 }
 
-/** 직접 실행(make check-app-duplicate-blocks): 소스 트리를 훑는다 — JS/TS 앱, Swift 네이티브·위젯. */
+/** 직접 실행(make check-app-duplicate-blocks): 소스 트리를 훑는다 — JS/TS 앱과 플랫폼 트리, Swift 네이티브·위젯, 모바일 셸. */
 const SCAN_DIRS = [
   "app/src",
   "app/__tests__",
+  "app/desktop/src",
+  "app/mobile/src",
   "app/macos/Shared",
   "app/macos/MarshallBluetooth-macOS",
   "app/macos/MarshallWidget",
+  "app/ios/MarshallBluetooth",
+  "app/android/app/src/main/java",
 ];
-const SCAN_FILES = ["app/App.tsx", "app/index.js"];
+const SCAN_FILES = ["app/App.tsx", "app/index.js", "app/metro.config.js", "app/desktop/build.ts"];
 
 export function scanTree(projectRoot: string): string[] {
   const issues: string[] = [];

@@ -88,6 +88,12 @@ final class MarshallScanner: NSObject {
 
   // MARK: - Public API
 
+  /// Starts the central without scanning, so `didChangeState` reports when a
+  /// `connect` can go out — a widget press connects to a known speaker directly.
+  func powerUp() {
+    queue.async { _ = self.central }
+  }
+
   func startScan() {
     queue.async {
       self.wantsScan = true
@@ -179,8 +185,16 @@ final class MarshallScanner: NSObject {
 
   // MARK: - Private
 
+  /// A speaker this scan saw, or one the system already knows: a peripheral this
+  /// app connected to before is retrievable by its identifier without a scan.
   private func peripheral(_ identifier: String) -> CBPeripheral? {
-    UUID(uuidString: identifier).flatMap { peripherals[$0] }
+    guard let uuid = UUID(uuidString: identifier) else { return nil }
+    if let seen = peripherals[uuid] { return seen }
+    guard central.state == .poweredOn,
+      let known = central.retrievePeripherals(withIdentifiers: [uuid]).first
+    else { return nil }
+    peripherals[uuid] = known
+    return known
   }
 
   /// The connected peripheral and its controls, or a reported failure. Runs on `queue`.

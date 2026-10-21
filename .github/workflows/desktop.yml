@@ -1,0 +1,115 @@
+# Roadie for Windows and Linux (MarshallBluetooth/app/desktop).
+#
+# The macOS app is built, signed and released on the maintainer's Mac with
+# `make release` (MarshallBluetooth/.omp/rules/release.md) — never here. This
+# workflow builds the two desktop installers on every change, and when that
+# release is published it attaches the Windows and Linux installers to it. It
+# only ever adds assets: Roadie.zip, appcast.xml and checksums.txt — the files
+# every installed Mac copy updates from — are never touched.
+name: Desktop (Windows, Linux)
+
+on:
+  release:
+    types: [published]
+  push:
+    # Branches only: the version tag `make release` pushes is built on `release` instead.
+    branches: ['**']
+    paths:
+      - 'MarshallBluetooth/app/**'
+      - '.github/workflows/desktop.yml'
+  pull_request:
+    paths:
+      - 'MarshallBluetooth/app/**'
+      - '.github/workflows/desktop.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'release' }}
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    name: Gates (lint, typecheck, test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            MarshallBluetooth/app/package-lock.json
+            MarshallBluetooth/app/desktop/package-lock.json
+      - name: Install
+        working-directory: MarshallBluetooth/app
+        run: npm ci && npm ci --prefix desktop
+      - name: Lint, typecheck, test
+        working-directory: MarshallBluetooth
+        run: make lint typecheck test desktop-typecheck
+
+  build:
+    name: Build (${{ matrix.name }})
+    needs: check
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-latest
+            target: --win
+            assets: release/*.exe
+          - name: Linux
+            os: ubuntu-latest
+            target: --linux
+            assets: release/*.AppImage release/*.deb
+    # A job's defaults replace the workflow's, so bash is named again — Windows
+    # runners default to PowerShell.
+    defaults:
+      run:
+        shell: bash
+        working-directory: MarshallBluetooth/app/desktop
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: MarshallBluetooth/app/desktop/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Version
+        # The git tag is the version (release.md); other builds are numbered by run.
+        run: |
+          if [ "${{ github.event_name }}" = release ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="0.0.0-ci.${{ github.run_number }}"
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - name: Package
+        run: |
+          node build.ts
+          npx electron-builder ${{ matrix.target }} --publish never -c.extraMetadata.version="$VERSION"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Roadie-${{ env.VERSION }}-${{ matrix.name }}
+          path: |
+            MarshallBluetooth/app/desktop/release/*.exe
+            MarshallBluetooth/app/desktop/release/*.AppImage
+            MarshallBluetooth/app/desktop/release/*.deb
+          if-no-files-found: error
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" ${{ matrix.assets }} --repo "$GITHUB_REPOSITORY" --clobber

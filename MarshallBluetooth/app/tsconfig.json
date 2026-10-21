@@ -4,5 +4,7 @@
     "types": ["jest"],
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["**/node_modules", "**/Pods"]
+  // The Windows/Linux app and its test type-check against DOM and Web Bluetooth
+  // types instead (app/desktop/tsconfig.json, `make desktop-typecheck`).
+  "exclude": ["**/node_modules", "**/Pods", "desktop", "__tests__/desktop.test.ts"]
 }

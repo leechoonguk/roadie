@@ -1,0 +1,128 @@
+# Roadie on Android, iOS and macOS (MarshallBluetooth/app).
+#
+# - Android: a Release APK signed with the React Native template's public
+#   debug key — installable by hand, not a store build. When `make release`
+#   publishes a release, the APK is attached to it.
+# - iOS: an unsigned simulator build, as a compile gate. Installing on a phone
+#   needs the maintainer's Apple signing in Xcode, so no iOS build is attached.
+# - macOS: the whole `make verify` gate and an unsigned build, as a compile gate only. The
+#   Mac app is built, signed and released on the maintainer's Mac
+#   (MarshallBluetooth/.omp/rules/release.md) — never from here.
+name: Native (Android, iOS, macOS)
+
+on:
+  release:
+    types: [published]
+  push:
+    # Branches only: the version tag `make release` pushes is built on `release` instead.
+    branches: ['**']
+    paths:
+      - 'MarshallBluetooth/app/**'
+      - '.github/workflows/native.yml'
+  pull_request:
+    paths:
+      - 'MarshallBluetooth/app/**'
+      - '.github/workflows/native.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: native-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'release' }}
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: MarshallBluetooth/app/package-lock.json
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - name: Install
+        working-directory: MarshallBluetooth/app
+        run: npm ci
+      - name: Version
+        # The git tag is the version (release.md); other builds are numbered by run.
+        run: |
+          if [ "${{ github.event_name }}" = release ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="0.0.0-ci.${{ github.run_number }}"
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - name: Build
+        working-directory: MarshallBluetooth
+        run: |
+          make android-apk v="$VERSION"
+          cp app/android/app/build/outputs/apk/release/app-release.apk "Roadie-$VERSION-android.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Roadie-${{ env.VERSION }}-Android
+          path: MarshallBluetooth/Roadie-*-android.apk
+          if-no-files-found: error
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        working-directory: MarshallBluetooth
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" Roadie-*-android.apk --repo "$GITHUB_REPOSITORY" --clobber
+
+  ios:
+    name: iOS (simulator build)
+    if: github.event_name != 'release'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: MarshallBluetooth/app/package-lock.json
+      - name: Install
+        working-directory: MarshallBluetooth/app
+        run: npm ci
+      - name: Build
+        working-directory: MarshallBluetooth
+        run: make ios-pods ios-build
+
+  macos:
+    name: macOS (make verify, unsigned build)
+    if: github.event_name != 'release'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: MarshallBluetooth/app/package-lock.json
+      - name: Install
+        working-directory: MarshallBluetooth/app
+        run: npm ci
+      # The project's whole gate — JS, Swift and every harness check — needs a
+      # Mac for swift-check and swift-test, so this is the one place it runs in full.
+      - name: make verify
+        working-directory: MarshallBluetooth
+        run: make verify
+      - name: Build
+        working-directory: MarshallBluetooth
+        run: |
+          make pods
+          xcodebuild -workspace app/macos/MarshallBluetooth.xcworkspace -scheme MarshallBluetooth-macOS \
+            -configuration Debug CODE_SIGNING_ALLOWED=NO build

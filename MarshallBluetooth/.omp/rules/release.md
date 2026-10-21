@@ -21,7 +21,7 @@ app's `SUFeedURL` — so publishing a release *is* shipping an update.
 |---|---|---|
 | Consent | `strict-publish-consent.ts` | `make release` / `make unrelease` when the current user turn does not ask for a release (or asks and forbids it); `make release … DRY_RUN=1` is exempt |
 | Route | `strict-release-route.ts` | raw `git tag` writes, pushing a version tag, `gh release create/delete/edit/upload/delete-asset` |
-| Consistency | `check-release.ts` (in `make verify`) | a feed URL other than the one `app-release.ts` publishes, a malformed `SUPublicEDKey`, a sandboxed app without the installer service and its mach-lookup exceptions, a literal version in either Info.plist, no Sparkle pod |
+| Consistency | `check-release.ts` (in `make verify`) | a feed URL other than the one `app-release.ts` publishes, a malformed `SUPublicEDKey`, a sandboxed app without the installer service and its mach-lookup exceptions, a literal version in either Info.plist, no Sparkle pod, an installer workflow (`desktop.yml`, `native.yml`) that is missing, does not run on a published release, builds tag pushes, uploads unguarded, or uploads a name matching `Roadie.zip`, `appcast.xml` or `checksums.txt` |
 
 ## Versions
 
@@ -66,6 +66,15 @@ current version.
    release with `Roadie.zip`, `appcast.xml` and `checksums.txt`, and verifies
    both the attached assets and that `releases/latest/download/appcast.xml` now
    names the new version.
+5. Publishing the release starts `.github/workflows/desktop.yml`, which builds
+   the Windows and Linux app (`app/desktop`, `make desktop-dist`) on GitHub's
+   runners and attaches `Roadie-<version>-windows-setup.exe`, `…-linux-x86_64.AppImage`
+   and `…-linux-amd64.deb` to the same release a few minutes later, and
+   `.github/workflows/native.yml` attaches `Roadie-<version>-android.apk`
+   (`make android-apk`, signed with the template's public debug key). None of
+   these carries an Apple key, so CI may build them; CI only adds assets and
+   never touches the three above. iOS has no release asset: installing it
+   needs the maintainer's Apple signing in Xcode.
 
 ## When It Fails
 

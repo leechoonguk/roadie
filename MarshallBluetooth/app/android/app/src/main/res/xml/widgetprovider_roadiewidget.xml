@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 4×2 cells, like the macOS widget's medium size. Updates come from the app
+     and from presses, never from a timer, so updatePeriodMillis is 0. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:resizeMode="horizontal|vertical"
+    android:initialLayout="@layout/rn_widget"
+    android:previewImage="@mipmap/ic_launcher"
+    android:description="@string/widget_description"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

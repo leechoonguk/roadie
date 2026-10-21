@@ -28,7 +28,9 @@ bashInterceptor:
 # global setting.
 disabledExtensions:
   - hook:post:check-app-duplicate-blocks:check-app-duplicate-blocks.ts
+  - hook:post:check-app-ios-project:check-app-ios-project.ts
   - hook:post:check-app-macos-project:check-app-macos-project.ts
+  - hook:post:check-app-protocol-parity:check-app-protocol-parity.ts
   - hook:post:check-app-native-boundary:check-app-native-boundary.ts
   - hook:post:check-code-layout:check-code-layout.ts
   - hook:post:check-makefiles:check-makefiles.ts

@@ -4,8 +4,8 @@ import os
 /// Carries the widget's requests to the speaker.
 ///
 /// Listens for the Darwin notification the widget posts, drains the App Group
-/// queue, and applies each request to the published speaker through the
-/// scanner. The scanner's read-back then flows to JavaScript, which
+/// queue, and applies the coalesced changes to the published speaker through
+/// the scanner. The scanner's read-back then flows to JavaScript, which
 /// republishes the snapshot, so the widget settles on the value the speaker
 /// actually stored.
 final class ControlRequestRelay {
@@ -34,41 +34,26 @@ final class ControlRequestRelay {
       CFNotificationCenterGetDarwinNotifyCenter(), Unmanaged.passUnretained(self).toOpaque())
   }
 
-  /// Applies every pending request to the speaker the snapshot names.
+  /// Applies every pending change to the speaker the snapshot names.
   func drain() {
     guard let store else { return }
-    let requests = ControlRequestQueue.drain(store)
-    guard !requests.isEmpty else {
+    let changes = ControlChange.coalesced(ControlRequestQueue.drain(store))
+    guard !changes.isEmpty else {
       Self.log.debug("woken with an empty queue")
       return
     }
-    guard var snapshot = SnapshotStore.load(from: store) else {
-      Self.log.error("\(requests.count) request(s) but no published speaker to apply them to")
+    guard let snapshot = SnapshotStore.load(from: store) else {
+      Self.log.error("\(changes.count) change(s) but no published speaker to apply them to")
       return
     }
-    // Rapid presses queue several steps of the same control; only the last
-    // value per control reaches the speaker, so a burst costs one write.
-    var volume: Int?
-    var toneChanged = false
-    for request in requests {
-      switch request {
-      case .volume(let level): volume = level
-      case .bass(let step):
-        snapshot.bass = step
-        toneChanged = true
-      case .treble(let step):
-        snapshot.treble = step
-        toneChanged = true
+    Self.log.info("applying \(changes.count) change(s) to \(snapshot.identifier, privacy: .public)")
+    for change in changes {
+      switch change {
+      case .volume(let level):
+        scanner.setVolume(identifier: snapshot.identifier, level: level)
+      case .eq(let bass, let treble):
+        scanner.setEQ(identifier: snapshot.identifier, bass: bass, treble: treble)
       }
-    }
-    Self.log.info("applying \(requests.count) request(s) to \(snapshot.identifier, privacy: .public)")
-    if let volume {
-      scanner.setVolume(identifier: snapshot.identifier, level: volume)
-    }
-    if toneChanged {
-      scanner.setEQ(
-        identifier: snapshot.identifier,
-        bass: snapshot.bass ?? EQScale.flat, treble: snapshot.treble ?? EQScale.flat)
     }
   }
 }

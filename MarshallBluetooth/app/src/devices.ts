@@ -5,12 +5,13 @@ import type {
   DiscoveredDevice,
 } from './native/marshallBle';
 import type { WidgetPayload } from './native/widgetBridge';
+import { EQ_STEPS } from './protocol';
 
-/** The speaker's EQ scale (knob steps), mirroring `EQScale` in Swift. */
-export const EQ_MAX = 10;
-export const EQ_FLAT = 5;
-/** Volume steps before the speaker reports its own maximum (an ACTON III reports 31). */
-export const FALLBACK_MAX_VOLUME = 31;
+export { FALLBACK_MAX_VOLUME } from './protocol';
+
+/** The speaker's EQ scale (knob steps), defined once in `protocol.ts`. */
+export const EQ_MAX = EQ_STEPS.max;
+export const EQ_FLAT = EQ_STEPS.flat;
 /** The Marshall control service, as CoreBluetooth spells it in an advertisement. */
 export const CONTROL_SERVICE = 'FCCD';
 

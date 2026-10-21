@@ -1,0 +1,69 @@
+{
+  "name": "roadie-desktop",
+  "productName": "Roadie",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Roadie for Windows and Linux: control a Marshall Bluetooth speaker from the system tray",
+  "author": {
+    "name": "leechoonguk",
+    "email": "leechoonguk@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/leechoonguk/roadie",
+  "main": "out/main.cjs",
+  "desktopName": "roadie.desktop",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/web-bluetooth": "0.0.21",
+    "electron": "43.7.7",
+    "electron-builder": "26.17.0",
+    "esbuild": "0.28.2",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-native-web": "0.21.3",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "build": {
+    "appId": "com.uk.marshallbluetooth",
+    "productName": "Roadie",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "icon": "out/icon.png",
+    "artifactName": "Roadie-${version}-${os}-${arch}.${ext}",
+    "publish": null,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Roadie-${version}-windows-setup.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "AudioVideo",
+      "maintainer": "leechoonguk <leechoonguk@users.noreply.github.com>",
+      "synopsis": "Control a Marshall Bluetooth speaker from the system tray",
+      "executableName": "roadie",
+      "syncDesktopName": true
+    }
+  }
+}

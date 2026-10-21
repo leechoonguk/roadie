@@ -31,6 +31,18 @@
  *      conformer's own implementation is never called through the protocol,
  *      and nothing fails — measured here as a delegate callback that dropped
  *      every value it was given.
+ *   7. Platform swaps hold. The desktop bundle (`app/desktop/build.ts`) and
+ *      Metro on Android (`app/metro.config.js`) replace `app/src/native/*`
+ *      modules; each replacement exists and exports every runtime name of
+ *      the module it replaces, and a wrapper that reads `NativeModules` is
+ *      replaced on both — else that platform crashes at launch, and neither
+ *      bundle is built by `make verify`.
+ *   8. One implementation per language. The platform files under
+ *      `app/desktop/src/` and `app/mobile/src/` are transports and surfaces:
+ *      none declares a function or constant that `app/src/protocol.ts`,
+ *      `app/src/controls.ts` or `app/src/ble/client.ts` exports — a second
+ *      decoder or step rule drifts from the shared one, which the tests then
+ *      no longer cover.
  *
  * Dormant (cause `absent`) while `app/macos/` does not exist.
  */
@@ -69,9 +81,20 @@ const NATIVE_SWIFT_DIRS = [
 ];
 
 /** JS/TS trees whose `NativeModules` reads are policed; the wrapper directory is the one exemption. */
-const SCRIPT_DIRS = ["app/src"];
+const SCRIPT_DIRS = ["app/src", "app/desktop/src", "app/mobile/src"];
 const SCRIPT_FILES = ["app/App.tsx", "app/index.js"];
 const WRAPPER_DIR = "app/src/native/";
+
+/** The files that swap a wrapper per platform, and how each names its target directory. */
+const SWAP_FILES = [
+  { file: "app/desktop/build.ts", platform: "Windows/Linux", base: "app/desktop" },
+  { file: "app/metro.config.js", platform: "Android", base: "app" },
+];
+/** The platform trees held to the shared implementation (claim 8). */
+const PLATFORM_DIRS = ["app/desktop/src", "app/mobile/src"];
+const SHARED_MODULES = ["app/src/protocol.ts", "app/src/controls.ts", "app/src/ble/client.ts"];
+const JS_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"];
+const RUNTIME_EXPORT = /^export\s+(?:async\s+)?(?:const|function|class|let)\s+(\w+)/gm;
 
 const REACT_IMPORT = /^\s*(?:@testable\s+)?import\s+(?:class\s+|struct\s+|func\s+)?React\w*\b/;
 const RCT_SYMBOL = /\bRCT[A-Z_]\w*/;
@@ -164,6 +187,8 @@ export function checkAppNativeBoundarySync(): string[] {
 
   issues.push(...checkProtocolExtensionMethods());
   issues.push(...checkBridgeFiles());
+  issues.push(...checkPlatformSwaps());
+  issues.push(...checkSingleImplementation());
 
   const scripts = [...SCRIPT_DIRS.flatMap((dir) => walk(dir, [".ts", ".tsx", ".js", ".jsx"])), ...SCRIPT_FILES];
   for (const path of scripts) {
@@ -385,6 +410,83 @@ function checkSelectors(bridgePath: string, adapterPath: string): string[] {
 // ============================================================
 
 /** Project-relative files under `dir` with one of the extensions. */
+/** Claim 7: every swap names an existing file that exports what it replaces; native-reading wrappers are swapped everywhere. */
+function checkPlatformSwaps(): string[] {
+  const issues: string[] = [];
+  const wrappers = walk(WRAPPER_DIR.slice(0, -1), [".ts"]);
+  if (wrappers.length === 0) {
+    return [`${WRAPPER_DIR}: holds no wrapper — the swap check has nothing to hold the platforms to`];
+  }
+  for (const { file, platform, base } of SWAP_FILES) {
+    if (!existsSync(join(projectRoot, file))) {
+      issues.push(`${file}: missing — the ${platform} build swaps no wrapper, so it would bundle the macOS native modules`);
+      continue;
+    }
+    // Each swap entry is one line: a pattern naming `native/<module>`, then the replacement's path segments.
+    const swapped = new Map<string, string>();
+    for (const line of readFileSync(join(projectRoot, file), "utf-8").split("\n")) {
+      const module = /\\\/native\\\/(\w+)\$/.exec(line)?.[1];
+      const segments = [...line.matchAll(/'([\w.]+)'/g)].map((m) => m[1]);
+      if (module === undefined || segments.length === 0) continue;
+      const target = `${base}/${line.includes("MOBILE") ? "mobile/src/" : ""}${segments.join("/")}`;
+      swapped.set(`${WRAPPER_DIR}${module}.ts`, target);
+    }
+    if (swapped.size === 0) {
+      issues.push(`${file}: read no swap of ${WRAPPER_DIR}* — the parser is blind or the swaps moved, and every claim below would pass on nothing`);
+      continue;
+    }
+    for (const [wrapper, target] of swapped) {
+      if (!existsSync(join(projectRoot, wrapper))) {
+        issues.push(`${file}: swaps ${wrapper}, which does not exist — a stale swap`);
+        continue;
+      }
+      if (!existsSync(join(projectRoot, target))) {
+        issues.push(`${file}: swaps ${wrapper} for ${target}, which does not exist — the ${platform} bundle fails to resolve it`);
+        continue;
+      }
+      const provided = runtimeExports(target);
+      for (const name of runtimeExports(wrapper)) {
+        if (!provided.has(name)) {
+          issues.push(`${target}: replaces ${wrapper} on ${platform} but does not export ${name} — every import of it is undefined there`);
+        }
+      }
+    }
+    for (const wrapper of wrappers) {
+      if (swapped.has(wrapper) || !NATIVE_MODULES.test(codeText(wrapper))) continue;
+      issues.push(`${wrapper}: reads NativeModules but ${file} does not swap it — on ${platform} it finds no native module and the app fails at launch`);
+    }
+  }
+  return issues;
+}
+
+/** Claim 8: no platform file re-declares a name the shared modules export. */
+function checkSingleImplementation(): string[] {
+  const shared = new Map<string, string>();
+  for (const path of SHARED_MODULES) {
+    if (!existsSync(join(projectRoot, path))) {
+      return [`${path}: missing — the shared implementation the platform files are held to is gone`];
+    }
+    for (const name of runtimeExports(path)) shared.set(name, path);
+  }
+  const issues: string[] = [];
+  for (const dir of PLATFORM_DIRS) {
+    for (const path of walk(dir, JS_EXTENSIONS)) {
+      eachCodeLine(path, (line, number) => {
+        const declared = /^\s*(?:export\s+)?(?:async\s+)?(?:function|const|let)\s+(\w+)/.exec(line)?.[1];
+        const owner = declared === undefined ? undefined : shared.get(declared);
+        if (owner === undefined) return;
+        issues.push(`${path}:${number}: declares ${declared}, which ${owner} already exports — import the shared one; a second copy drifts from it untested`);
+      });
+    }
+  }
+  return issues;
+}
+
+/** The runtime names a module exports (types excluded): what a swap must keep. */
+function runtimeExports(path: string): Set<string> {
+  return new Set([...codeText(path).matchAll(RUNTIME_EXPORT)].map((m) => m[1]));
+}
+
 function walk(dir: string, extensions: string[]): string[] {
   const abs = join(projectRoot, dir);
   if (!existsSync(abs) || !statSync(abs).isDirectory()) return [];
