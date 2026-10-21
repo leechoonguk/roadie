@@ -5,7 +5,7 @@
 #   publishes a release, the APK is attached to it.
 # - iOS: an unsigned simulator build, as a compile gate. Installing on a phone
 #   needs the maintainer's Apple signing in Xcode, so no iOS build is attached.
-# - macOS: the Swift gates and an unsigned build, as a compile gate only. The
+# - macOS: the whole `make verify` gate and an unsigned build, as a compile gate only. The
 #   Mac app is built, signed and released on the maintainer's Mac
 #   (MarshallBluetooth/.omp/rules/release.md) — never from here.
 name: Native (Android, iOS, macOS)
@@ -102,7 +102,7 @@ jobs:
         run: make ios-pods ios-build
 
   macos:
-    name: macOS (Swift gates, unsigned build)
+    name: macOS (make verify, unsigned build)
     if: github.event_name != 'release'
     runs-on: macos-latest
     steps:
@@ -115,9 +115,11 @@ jobs:
       - name: Install
         working-directory: MarshallBluetooth/app
         run: npm ci
-      - name: Swift gates
+      # The project's whole gate — JS, Swift and every harness check — needs a
+      # Mac for swift-check and swift-test, so this is the one place it runs in full.
+      - name: make verify
         working-directory: MarshallBluetooth
-        run: make swift-check swift-test
+        run: make verify
       - name: Build
         working-directory: MarshallBluetooth
         run: |

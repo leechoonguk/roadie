@@ -19,6 +19,13 @@
  *      tag. A literal version ships every release as the same build, and Sparkle
  *      compares `CFBundleVersion` to decide whether an update is newer.
  *   5. Sparkle linked — the Podfile declares the `Sparkle` pod the app imports.
+ *   6. CI only adds — each workflow that attaches installers to a release
+ *      (`.github/workflows/desktop.yml`, `native.yml`) runs on a published
+ *      release, uploads only behind `github.event_name == 'release'`, builds
+ *      branch pushes only (the version tag `make release` pushes would build
+ *      twice), and never uploads a file named like one of the release's own
+ *      assets — a clobbered `appcast.xml` or `Roadie.zip` ships a broken
+ *      update to every installed Mac.
  *
  * Reads files only (no keychain, no network). Dormant (cause `absent`) while the
  * app has no Info.plist.
@@ -35,7 +42,8 @@ import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
 import { touchesPath } from "../lib/hook-scope.ts";
 import { dormant, passLine } from "../lib/hook-dormancy.ts";
 import { resolveProjectRoot } from "../lib/hook-project-root.ts";
-import { FEED_URL } from "../lib/app-release.ts";
+import { FEED_URL, RELEASE_ASSETS } from "../lib/app-release.ts";
+import { plistArray, plistString, plistTrue } from "../lib/app-xcode-project.ts";
 
 declare const process: { argv: string[]; exit(code?: number): never };
 
@@ -51,6 +59,9 @@ const APP_ENTITLEMENTS = "app/macos/MarshallBluetooth-macOS/MarshallBluetooth.en
 const PODFILE = "app/macos/Podfile";
 const MACH_LOOKUP = "com.apple.security.temporary-exception.mach-lookup.global-name";
 const INSTALLER_SERVICES = ["$(PRODUCT_BUNDLE_IDENTIFIER)-spks", "$(PRODUCT_BUNDLE_IDENTIFIER)-spki"];
+/** The workflows `release.md` names as attaching installers; relative to the repository root, the project's parent. */
+const WORKFLOWS = ["desktop.yml", "native.yml"];
+const WORKFLOW_DIR = "../.github/workflows";
 const VERSION_KEYS: Array<[string, string]> = [
   ["CFBundleShortVersionString", "$(MARKETING_VERSION)"],
   ["CFBundleVersion", "$(CURRENT_PROJECT_VERSION)"],
@@ -63,7 +74,7 @@ const VERSION_KEYS: Array<[string, string]> = [
 export default function checkRelease(pi: ExtensionAPI): void {
   pi.on("tool_result", (event: { toolName?: string; input?: Record<string, unknown>; content?: Array<{ type: string; text?: string }> }) => guarded("check-release", event, () => {
     if (event.toolName && !MUTATING_TOOLS.has(event.toolName)) return;
-    if (!touchesPath(event, ["app/macos/", ".omp/hooks/lib/app-release.ts"])) return;
+    if (!touchesPath(event, ["app/macos/", ".omp/hooks/lib/app-release.ts", ".github/workflows/"])) return;
 
     const issues = checkReleaseSync();
     if (issues.length === 0) {
@@ -140,24 +151,54 @@ export function checkReleaseSync(): string[] {
     issues.push(`${PODFILE}: declares no 'Sparkle' pod, yet ${APP_PLIST} configures Sparkle — the app would not link`);
   }
 
+  issues.push(...checkWorkflows());
+  return issues;
+}
+
+/** Claim 6: the installer workflows run on a published release and add only their own files. */
+function checkWorkflows(): string[] {
+  const issues: string[] = [];
+  for (const name of WORKFLOWS) {
+    const path = `${WORKFLOW_DIR}/${name}`;
+    if (!existsSync(join(projectRoot, path))) {
+      issues.push(`${path}: missing — release.md promises it attaches installers to every release`);
+      continue;
+    }
+    const text = read(path);
+    if (!/\n {2}release:\s*\n {4}types:\s*\[\s*published\s*\]/.test(text)) {
+      issues.push(`${path}: does not run on release: types: [published] — make release publishes and nothing attaches the installers`);
+    }
+    if (/\n {2}push:/.test(text) && !/\n {2}push:\s*\n(?: {4}#.*\n)* {4}branches:/.test(text)) {
+      issues.push(`${path}: its push trigger is not limited to branches — the version tag make release pushes builds a second time`);
+    }
+    const steps = text.split(/\n(?= +- (?:name|uses):)/);
+    const uploads = steps.filter((step) => /gh release upload\b/.test(step));
+    if (uploads.length === 0) {
+      issues.push(`${path}: runs no gh release upload — the release would carry no installer from this workflow`);
+    }
+    // Uploaded names come from the command and from the matrix's `assets:` entries it expands.
+    const uploaded = [
+      ...uploads.flatMap((step) => [.../gh release upload\s+\S+\s+(.*?)\s+--/.exec(step)?.[1].split(/\s+/) ?? []]),
+      ...[...text.matchAll(/^\s+assets:\s*(.+)$/gm)].flatMap((m) => m[1].split(/\s+/)),
+    ].filter((token) => !token.startsWith("${{"));
+    for (const step of uploads) {
+      if (!/if:\s*github\.event_name\s*==\s*'release'/.test(step)) {
+        issues.push(`${path}: a gh release upload step is not guarded by if: github.event_name == 'release' — a branch build would try to upload`);
+      }
+    }
+    for (const token of uploaded) {
+      const file = token.split("/").pop() ?? token;
+      const pattern = new RegExp(`^${file.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`);
+      for (const asset of RELEASE_ASSETS.filter((own) => pattern.test(own))) {
+        issues.push(`${path}: uploads ${token}, which matches the release's own ${asset} — --clobber would replace what every installed Mac updates from`);
+      }
+    }
+  }
   return issues;
 }
 
 function read(path: string): string {
   return readFileSync(join(projectRoot, path), "utf-8");
-}
-
-function plistString(content: string, key: string): string | undefined {
-  return new RegExp(`<key>${key}</key>\\s*<string>([^<]*)</string>`).exec(content)?.[1];
-}
-
-function plistTrue(content: string, key: string): boolean {
-  return new RegExp(`<key>${key}</key>\\s*<true\\s*/>`).test(content);
-}
-
-function plistArray(content: string, key: string): string[] {
-  const body = new RegExp(`<key>${key.replace(/\./g, "\\.")}</key>\\s*<array>([\\s\\S]*?)</array>`).exec(content)?.[1] ?? "";
-  return [...body.matchAll(/<string>([^<]*)<\/string>/g)].map((m) => m[1]);
 }
 
 // Direct execution (make check-release): run the check and print results.

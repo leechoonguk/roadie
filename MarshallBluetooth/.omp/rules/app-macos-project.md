@@ -41,7 +41,9 @@ through symlinks, never by membership.
   a `PBXFileReference`, a `PBXBuildFile`, and an entry in that target's Sources
   phase; a file in `Shared/` is in both. A file that moves out of a tree, or is
   deleted, leaves no reference behind. A file needed by both targets lives in
-  `Shared/` — never compiled across trees.
+  `Shared/` — never compiled across trees. The iOS project compiles these same
+  sources a second time, so a file added or removed here is added or removed
+  there too (rule://app-ios-project, `make check-app-ios-project`).
 - **Signed by a team.** Every configuration that signs with entitlements names
   a `DEVELOPMENT_TEAM`. With an ad-hoc signature the App Group loses its team
   prefix and macOS refuses the shared container *without a prompt*, so the

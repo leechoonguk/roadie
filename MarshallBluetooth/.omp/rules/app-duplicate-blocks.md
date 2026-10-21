@@ -7,6 +7,9 @@ globs:
       - app/src/**/*.ts
       - app/src/**/*.tsx
       - app/__tests__/**/*.tsx
+      - app/desktop/src/**/*.ts
+      - app/mobile/src/**/*.ts
+      - app/mobile/src/**/*.tsx
       - app/macos/Shared/*.swift
       - app/macos/MarshallBluetooth-macOS/**/*.swift
       - app/macos/MarshallBluetooth-macOS/**/*.m
@@ -39,6 +42,8 @@ renumbering sections of a file that simply contained the whole run twice. The
 duplicate is the cause; this check names it.
 
 Machine check: `make check-app-duplicate-blocks` scans `app/src`,
-`app/__tests__`, the entry files and the Swift/Objective-C trees under
-`app/macos/`. Data formats (JSON, plists, entitlements, the Xcode project) are
+`app/__tests__`, the platform trees `app/desktop/src` and `app/mobile/src`, the
+entry and bundler files (`App.tsx`, `index.js`, `metro.config.js`,
+`desktop/build.ts`), the Swift/Objective-C trees under `app/macos/`, and the
+mobile shells (`app/ios/MarshallBluetooth/`, the Android Kotlin). Data formats (JSON, plists, entitlements, the Xcode project) are
 exempt — structural repetition is normal there.

@@ -9,6 +9,11 @@ globs:
       - app/src/**/*.ts
       - app/src/**/*.tsx
       - app/App.tsx
+      - app/desktop/build.ts
+      - app/desktop/src/**/*.ts
+      - app/mobile/src/**/*.ts
+      - app/mobile/src/**/*.tsx
+      - app/metro.config.js
 alwaysApply: false
 ---
 
@@ -99,7 +104,18 @@ with.
   speaker (`--raw` to watch values move as a knob turns, `--write` to confirm a
   value sticks) and is pinned in `CoreTests/Tests/` with the captured bytes. A
   constant with no capture behind it is a guess the speaker will refuse.
-
+- **A swap keeps the wrapper's shape.** `app/desktop/build.ts` (Windows/Linux)
+  and `app/metro.config.js` (Android) replace `app/src/native/*` modules. Each
+  replacement exists and exports every runtime name of the module it replaces,
+  and a wrapper that reads `NativeModules` is replaced on both — neither bundle
+  is built by `make verify`, so a missing export or swap fails only at launch.
+- **One implementation per language.** Files under `app/desktop/src/` and
+  `app/mobile/src/` are transports (how to scan, how to open a GATT link) and
+  surfaces (the tray, the Android widget). None declares a name that
+  `app/src/protocol.ts`, `app/src/controls.ts` or `app/src/ble/client.ts`
+  exports: a second decoder or step rule drifts from the shared one, and the
+  shared tests no longer cover it. The Swift half is held to the TypeScript one
+  by rule://app-protocol-parity.
 ## Adding a Native Capability
 
 1. If the capability talks to the speaker, capture the characteristic with

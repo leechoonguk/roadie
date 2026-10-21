@@ -21,7 +21,7 @@ app's `SUFeedURL` — so publishing a release *is* shipping an update.
 |---|---|---|
 | Consent | `strict-publish-consent.ts` | `make release` / `make unrelease` when the current user turn does not ask for a release (or asks and forbids it); `make release … DRY_RUN=1` is exempt |
 | Route | `strict-release-route.ts` | raw `git tag` writes, pushing a version tag, `gh release create/delete/edit/upload/delete-asset` |
-| Consistency | `check-release.ts` (in `make verify`) | a feed URL other than the one `app-release.ts` publishes, a malformed `SUPublicEDKey`, a sandboxed app without the installer service and its mach-lookup exceptions, a literal version in either Info.plist, no Sparkle pod |
+| Consistency | `check-release.ts` (in `make verify`) | a feed URL other than the one `app-release.ts` publishes, a malformed `SUPublicEDKey`, a sandboxed app without the installer service and its mach-lookup exceptions, a literal version in either Info.plist, no Sparkle pod, an installer workflow (`desktop.yml`, `native.yml`) that is missing, does not run on a published release, builds tag pushes, uploads unguarded, or uploads a name matching `Roadie.zip`, `appcast.xml` or `checksums.txt` |
 
 ## Versions
 

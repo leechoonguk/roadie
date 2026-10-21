@@ -1,7 +1,7 @@
 .PHONY: help install pods start run build relaunch app-logs typecheck lint test swift-check swift-test ble-probe app-icon verify clean commit push \
 	desktop-install desktop-build desktop-start desktop-typecheck desktop-dist android-apk ios-pods ios-build \
 	dist release unrelease \
-	check-app-duplicate-blocks check-app-macos-project check-app-native-boundary check-code-layout check-makefiles \
+	check-app-duplicate-blocks check-app-ios-project check-app-macos-project check-app-native-boundary check-app-protocol-parity check-code-layout check-makefiles \
 	check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling check-verify
 
 APP := app
@@ -113,7 +113,7 @@ ios-pods: ## Install CocoaPods for the iOS app (requires Xcode)
 ios-build: ## Build the iOS app for the simulator, unsigned (requires Xcode and `make ios-pods`; a device build is signed in Xcode)
 	xcodebuild -workspace $(APP)/ios/MarshallBluetooth.xcworkspace -scheme MarshallBluetooth -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
 
-verify: lint typecheck test swift-check swift-test check-app-duplicate-blocks check-app-macos-project check-app-native-boundary check-code-layout check-makefiles check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling ## Run every gate that runs without Xcode
+verify: lint typecheck test swift-check swift-test check-app-duplicate-blocks check-app-ios-project check-app-macos-project check-app-native-boundary check-app-protocol-parity check-code-layout check-makefiles check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling ## Run every gate that runs without Xcode
 
 clean: ## Remove build output and caches
 	rm -rf $(MACOS)/build $(MACOS)/CoreTests/.build $(APP)/coverage
@@ -147,11 +147,17 @@ unrelease: ## Delete a GitHub release and its tag (usage: make unrelease v=vX.Y.
 check-app-duplicate-blocks: ## Check app/ sources for duplicated block runs (stale rewrite + partial edits)
 	node .omp/hooks/post/check-app-duplicate-blocks.ts
 
+check-app-ios-project: ## Check the iOS Xcode project (shared sources in both targets, group. App Group, presses in the app, Bluetooth, embed, team)
+	node .omp/hooks/post/check-app-ios-project.ts
+
 check-app-macos-project: ## Check the Xcode project (target membership, team signing, App Group, names, menu bar residency)
 	node .omp/hooks/post/check-app-macos-project.ts
 
 check-app-native-boundary: ## Check the React Native ↔ Swift boundary (React-free core/shared/widget, thin adapters)
 	node .omp/hooks/post/check-app-native-boundary.ts
+
+check-app-protocol-parity: ## Check that Swift and TypeScript agree on the GATT UUIDs, scales, product names and press model
+	node .omp/hooks/post/check-app-protocol-parity.ts
 
 check-code-layout: ## Check code layout (comments, TS file layout, member order, whitespace)
 	node .omp/hooks/post/check-code-layout.ts

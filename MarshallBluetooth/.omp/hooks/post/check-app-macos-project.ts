@@ -43,6 +43,7 @@ import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
 import { touchesPath } from "../lib/hook-scope.ts";
 import { dormant, passLine } from "../lib/hook-dormancy.ts";
 import { resolveProjectRoot, WALK_EXCLUDES } from "../lib/hook-project-root.ts";
+import { APPLICATION, parseProject, plistArray, plistString, plistTrue, type Project } from "../lib/app-xcode-project.ts";
 
 // ============================================================
 // Constants
@@ -57,10 +58,6 @@ const PROJECT_FILE = "app/macos/MarshallBluetooth.xcodeproj/project.pbxproj";
 const SHARED_DIR = "app/macos/Shared";
 
 const SOURCE_EXTENSIONS = [".swift", ".m"];
-const APPLICATION = "com.apple.product-type.application";
-
-/** Object ids in a pbxproj are 24 hex digits. */
-const ID = "[0-9A-F]{24}";
 
 // ============================================================
 // Functions
@@ -92,7 +89,7 @@ export function checkAppMacosProjectSync(): string[] {
   if (!existsSync(join(projectRoot, PROJECT_FILE))) {
     return dormant("check-app-macos-project", "absent", "no Xcode project under app/macos/");
   }
-  const project = parseProject(readFileSync(join(projectRoot, PROJECT_FILE), "utf-8"));
+  const project = parseProject(readFileSync(join(projectRoot, PROJECT_FILE), "utf-8"), MACOS_DIR);
   if (project.targets.length === 0) {
     return [`${PROJECT_FILE}: read no PBXNativeTarget — the project parser is blind, every claim below would pass on nothing`];
   }
@@ -264,85 +261,6 @@ function checkResidencyAndBluetooth(project: Project): string[] {
 // Helpers
 // ============================================================
 
-interface BuildConfig {
-  name: string;
-  settings: Map<string, string>;
-}
-
-interface Target {
-  name: string;
-  productType: string;
-  /** Project-relative Info.plist of the target, from INFOPLIST_FILE. */
-  infoPlist: string | null;
-  configs: BuildConfig[];
-  /** File names the target's Sources phase compiles. */
-  sources: Set<string>;
-  sourcesDeclared: number;
-  sourcesRead: number;
-}
-
-interface Project {
-  targets: Target[];
-}
-
-/**
- * Reads the parts of a pbxproj the claims need. Objects are matched by id, so
- * formatting (one line or many) does not matter; counts of declared versus
- * resolved entries are kept so a defeated parse reports instead of passing.
- */
-function parseProject(text: string): Project {
-  const fileNames = new Map<string, string>();
-  for (const m of text.matchAll(new RegExp(`(${ID}) /\\*[^*]*\\*/ = \\{isa = PBXFileReference;[^}]*?path = "?([^;"]+)"?;`, "g"))) {
-    fileNames.set(m[1], basename(m[2]));
-  }
-  const buildFiles = new Map<string, string>();
-  for (const m of text.matchAll(new RegExp(`(${ID}) /\\*[^*]*\\*/ = \\{isa = PBXBuildFile; fileRef = (${ID})`, "g"))) {
-    buildFiles.set(m[1], m[2]);
-  }
-  const phases = new Map<string, string[]>();
-  for (const m of text.matchAll(new RegExp(`(${ID}) /\\* Sources \\*/ = \\{\\s*isa = PBXSourcesBuildPhase;[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`, "g"))) {
-    phases.set(m[1], [...m[2].matchAll(new RegExp(ID, "g"))].map((id) => id[0]));
-  }
-  const configs = new Map<string, BuildConfig>();
-  for (const m of text.matchAll(new RegExp(`(${ID}) /\\* (\\w+) \\*/ = \\{\\s*isa = XCBuildConfiguration;[\\s\\S]*?buildSettings = \\{([\\s\\S]*?)\\n\\t\\t\\t\\};`, "g"))) {
-    const settings = new Map<string, string>();
-    for (const s of m[3].matchAll(/^\s*"?([A-Z_][A-Z0-9_]*(?:\[[^\]]*\])?)"? = "?([^;"\n]*)"?;$/gm)) {
-      settings.set(s[1], s[2].trim());
-    }
-    configs.set(m[1], { name: m[2], settings });
-  }
-  const configLists = new Map<string, string[]>();
-  for (const m of text.matchAll(new RegExp(`/\\* Build configuration list for PBXNativeTarget "([^"]+)" \\*/ = \\{\\s*isa = XCConfigurationList;\\s*buildConfigurations = \\(([\\s\\S]*?)\\);`, "g"))) {
-    configLists.set(m[1], [...m[2].matchAll(new RegExp(ID, "g"))].map((id) => id[0]));
-  }
-
-  const targets: Target[] = [];
-  for (const m of text.matchAll(new RegExp(`(${ID}) /\\* [^*]+ \\*/ = \\{\\s*isa = PBXNativeTarget;([\\s\\S]*?)\\n\\t\\t\\};`, "g"))) {
-    const body = m[2];
-    const name = /\n\t\t\tname = "?([^;"]+)"?;/.exec(body)?.[1] ?? "";
-    const productType = /productType = "([^"]+)";/.exec(body)?.[1] ?? "";
-    const phaseIds = [...(/buildPhases = \(([\s\S]*?)\);/.exec(body)?.[1] ?? "").matchAll(new RegExp(ID, "g"))].map((id) => id[0]);
-    const files = phaseIds.flatMap((id) => phases.get(id) ?? []);
-    const sources = new Set<string>();
-    for (const file of files) {
-      const name = fileNames.get(buildFiles.get(file) ?? "");
-      if (name !== undefined) sources.add(name);
-    }
-    const targetConfigs = (configLists.get(name) ?? []).map((id) => configs.get(id)).filter((config): config is BuildConfig => config !== undefined);
-    const plist = targetConfigs.map((config) => config.settings.get("INFOPLIST_FILE")).find(Boolean);
-    targets.push({
-      name,
-      productType,
-      infoPlist: plist === undefined ? null : `${MACOS_DIR}/${plist}`,
-      configs: targetConfigs,
-      sources,
-      sourcesDeclared: files.length,
-      sourcesRead: [...files].filter((file) => fileNames.has(buildFiles.get(file) ?? "")).length,
-    });
-  }
-  return { targets };
-}
-
 /** Project-relative source files under `dir`, or none when the tree does not exist. */
 function walk(dir: string): string[] {
   const abs = join(projectRoot, dir);
@@ -364,19 +282,6 @@ function walk(dir: string): string[] {
 function readProjectFile(path: string): string | null {
   const abs = join(projectRoot, path);
   return existsSync(abs) ? readFileSync(abs, "utf-8") : null;
-}
-
-function plistString(content: string, key: string): string | undefined {
-  return new RegExp(`<key>${key}</key>\\s*<string>([^<]*)</string>`).exec(content)?.[1];
-}
-
-function plistTrue(content: string, key: string): boolean {
-  return new RegExp(`<key>${key}</key>\\s*<true\\s*/>`).test(content);
-}
-
-function plistArray(content: string, key: string): string[] {
-  const body = new RegExp(`<key>${key}</key>\\s*<array>([\\s\\S]*?)</array>`).exec(content)?.[1] ?? "";
-  return [...body.matchAll(/<string>([^<]*)<\/string>/g)].map((m) => m[1]);
 }
 
 // Direct execution (make check-app-macos-project): run the check and print results.
