@@ -49,14 +49,13 @@ export interface EQSettings {
 
 /**
  * What one characteristic value reports: the fields of a `DeviceUpdate`, plus
- * what the Bluetooth layer keeps to encode its next write.
+ * the EQ's raw layout, which the next EQ write needs.
  */
 export interface CharacteristicReport {
   batteryPercent?: number;
   deviceInfo?: DeviceInfo;
   controlState?: ControlState;
   eq?: EQSettings;
-  maxVolume?: number;
 }
 
 /** The control service in an advertisement makes a candidate; so does a Marshall product name. */
@@ -97,7 +96,7 @@ export function decodeCharacteristic(uuid: string, bytes: Uint8Array): Character
     }
     case UUIDS.maxVolume: {
       const maximum = decodeVolume(bytes);
-      return maximum === null ? null : { controlState: { maxVolume: maximum }, maxVolume: maximum };
+      return maximum === null ? null : { controlState: { maxVolume: maximum } };
     }
     case UUIDS.equalizer: {
       const eq = decodeEQ(bytes);

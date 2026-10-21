@@ -1,12 +1,11 @@
+import { PermissionsAndroid } from 'react-native';
+
 import { marshallBle } from '../mobile/src/marshallBle';
-import {
-  decodeCharacteristic,
-  fromBase64,
-  isMarshallCandidate,
-  shortServiceUUID,
-  toBase64,
-  UUIDS,
-} from '../src/protocol';
+import { fromBase64, toBase64, UUIDS } from '../src/protocol';
+
+// The react-native-ble-plx transport only: advertisements mapped to the
+// shared shape, and a GATT link over base64 values. What the client does with
+// a link is in bleClient.test.ts.
 
 /** One fake speaker's characteristics, keyed by UUID, holding base64 as ble-plx does. */
 const mockStored: Record<string, string> = {};
@@ -49,36 +48,6 @@ jest.mock('react-native-ble-plx', () => ({
   })),
 }));
 
-test('base64 round-trips every length, as ble-plx carries values', () => {
-  for (const bytes of [[], [31], [5, 0xff], [5, 0xff, 0xff, 0xff, 4], [0, 1, 2, 3, 4, 5]]) {
-    const encoded = toBase64(Uint8Array.from(bytes));
-    expect([...fromBase64(encoded)]).toEqual(bytes);
-  }
-  // Fixed points from a reference encoder: padding for one and two trailing bytes.
-  expect(toBase64(Uint8Array.from([31]))).toBe('Hw==');
-  expect(toBase64(Uint8Array.from([5, 0xff]))).toBe('Bf8=');
-  expect(toBase64(Uint8Array.from([5, 0xff, 0xff, 0xff, 4]))).toBe('Bf///wQ=');
-});
-
-test('advertised services read as CoreBluetooth spells them, and candidates match the Swift rule', () => {
-  expect(shortServiceUUID(UUIDS.controlService)).toBe('FCCD');
-  expect(shortServiceUUID(UUIDS.volume)).toBe(UUIDS.volume.toUpperCase());
-  expect(isMarshallCandidate(null, ['FCCD'])).toBe(true);
-  expect(isMarshallCandidate('Acton III [LE]', [])).toBe(true);
-  expect(isMarshallCandidate('AirPods Pro', ['180F'])).toBe(false);
-});
-
-test('one characteristic value decodes to the fields its report carries', () => {
-  expect(decodeCharacteristic(UUIDS.serialNumber, Uint8Array.from([0x41, 0x31, 0]))).toEqual({
-    deviceInfo: { serialNumber: 'A1' },
-  });
-  expect(decodeCharacteristic(UUIDS.maxVolume.toUpperCase(), Uint8Array.from([31]))).toEqual({
-    controlState: { maxVolume: 31 },
-    maxVolume: 31,
-  });
-  expect(decodeCharacteristic(UUIDS.batteryLevel, Uint8Array.from([101]))).toBeNull();
-});
-
 test('a phone search reports speakers, connecting reads them, and a write reads back', async () => {
   Object.assign(mockStored, {
     [UUIDS.modelNumber]: toBase64(Uint8Array.from('ACTON III', character => character.charCodeAt(0))),
@@ -92,6 +61,12 @@ test('a phone search reports speakers, connecting reads them, and a write reads 
   marshallBle.onStateChanged(state => states.push(state));
   marshallBle.onDeviceDiscovered(device => discovered.push(device));
   marshallBle.onDeviceUpdated(update => updates.push(update));
+
+  const granted = Object.fromEntries(
+    Object.values(PermissionsAndroid.PERMISSIONS).map(name => [name, PermissionsAndroid.RESULTS.GRANTED]),
+  ) as Awaited<ReturnType<typeof PermissionsAndroid.requestMultiple>>;
+  jest.spyOn(PermissionsAndroid, 'requestMultiple').mockResolvedValue(granted);
+  jest.spyOn(PermissionsAndroid, 'check').mockResolvedValue(true);
 
   marshallBle.startScan();
   await flush();

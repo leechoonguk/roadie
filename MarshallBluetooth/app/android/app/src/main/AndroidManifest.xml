@@ -31,5 +31,19 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+      <!-- The home screen widget (react-native-android-widget). Its presses arrive
+           as WIDGET_CLICK broadcasts and run as a background task in JavaScript. -->
+      <receiver
+        android:name=".widget.RoadieWidget"
+        android:exported="false"
+        android:label="Roadie">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+          <action android:name="${applicationId}.WIDGET_CLICK" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widgetprovider_roadiewidget" />
+      </receiver>
     </application>
 </manifest>

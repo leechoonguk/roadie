@@ -16,7 +16,9 @@
 		514201522437B4B40078DB4F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 514201512437B4B40078DB4F /* Assets.xcassets */; };
 		5A7E8FE31C58693533CCBA01 /* MarshallWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1F1C4E2EEBD6BAEDB899E13F /* MarshallWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		6D69461968676235657D707F /* DeviceSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */; };
+		67375A2D7BC634595E789300 /* ControlStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A27509AD66C7B80AB4AAEC8 /* ControlStep.swift */; };
 		7302BAB41325B3097FA9AB05 /* DeviceSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */; };
+		6CB7E8AF33D560FD33108E9C /* ControlStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A27509AD66C7B80AB4AAEC8 /* ControlStep.swift */; };
 		96BC0D3039E43968020AEF77 /* WidgetBridgeModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 062545A918472A4E4E800A52 /* WidgetBridgeModule.m */; };
 		9ACA374CB61AF5C9B36498BA /* MarshallBleModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13C5468807D0F2253B6D5866 /* MarshallBleModule.swift */; };
 		A1B2C3D4E5F60718293A4B5C /* ControlRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E1D2C3B4A5968778695A4B /* ControlRequest.swift */; };
@@ -25,6 +27,7 @@
 		BCD8B4BAE4364490844909F8 /* MarshallWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020BC345AF137B42A5B25 /* MarshallWidget.swift */; };
 		C3D4E5F60718293A4B5C6D7E /* ControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F2A3B4C5D6E7F8091A2B3C /* ControlIntents.swift */; };
 		D4E5F60718293A4B5C6D7E8F /* ControlRequestRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E3F4A5B6C7D8E9F0A1B2C3 /* ControlRequestRelay.swift */; };
+		40FF82D82B6C03E05D1B37C2 /* OneShotSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F247C0F0C60E647E3CED4912 /* OneShotSession.swift */; };
 		D8AE45576FF34B8F6CC4C87C /* MarshallBleModule.m in Sources */ = {isa = PBXBuildFile; fileRef = DFA8C8C4218045FD6DD9B62C /* MarshallBleModule.m */; };
 		DEC7E4C9B249EDAF9674C29D /* MarshallScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5A6400A85563AF77FB300A1 /* MarshallScanner.swift */; };
 		E195981E0D15B3081AC2903E /* WidgetPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C7C8B948664A11654E8B00 /* WidgetPublisher.swift */; };
@@ -58,6 +61,7 @@
 		062545A918472A4E4E800A52 /* WidgetBridgeModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WidgetBridgeModule.m; sourceTree = "<group>"; };
 		13C5468807D0F2253B6D5866 /* MarshallBleModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarshallBleModule.swift; sourceTree = "<group>"; };
 		163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DeviceSnapshot.swift; sourceTree = "<group>"; };
+		4A27509AD66C7B80AB4AAEC8 /* ControlStep.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlStep.swift; sourceTree = "<group>"; };
 		1F1C4E2EEBD6BAEDB899E13F /* MarshallWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MarshallWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		234237712E4DA390D02FB3CD /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		514201492437B4B30078DB4F /* MarshallBluetooth.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MarshallBluetooth.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -77,6 +81,7 @@
 		BD938B004FA489DC1A543FE9 /* WidgetBridgeModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetBridgeModule.swift; sourceTree = "<group>"; };
 		C82020BC345AF137B42A5B25 /* MarshallWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarshallWidget.swift; sourceTree = "<group>"; };
 		D2E3F4A5B6C7D8E9F0A1B2C3 /* ControlRequestRelay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlRequestRelay.swift; sourceTree = "<group>"; };
+		F247C0F0C60E647E3CED4912 /* OneShotSession.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OneShotSession.swift; sourceTree = "<group>"; };
 		DFA8C8C4218045FD6DD9B62C /* MarshallBleModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MarshallBleModule.m; sourceTree = "<group>"; };
 		E1F2A3B4C5D6E7F8091A2B3C /* ControlIntents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlIntents.swift; sourceTree = "<group>"; };
 		E8F3AE111957C4E0472D0C22 /* MarshallWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = MarshallWidget.entitlements; sourceTree = "<group>"; };
@@ -121,6 +126,7 @@
 			isa = PBXGroup;
 			children = (
 				163DB43FEF19EF01740AE639 /* DeviceSnapshot.swift */,
+				4A27509AD66C7B80AB4AAEC8 /* ControlStep.swift */,
 				F0E1D2C3B4A5968778695A4B /* ControlRequest.swift */,
 			);
 			name = Shared;
@@ -219,6 +225,7 @@
 				59C7C8B948664A11654E8B00 /* WidgetPublisher.swift */,
 				8D1E3F2A4B5C6D7E9F0A1B2C /* StatusItemController.swift */,
 				D2E3F4A5B6C7D8E9F0A1B2C3 /* ControlRequestRelay.swift */,
+				F247C0F0C60E647E3CED4912 /* OneShotSession.swift */,
 			);
 			name = Core;
 			path = Core;
@@ -425,8 +432,10 @@
 				E195981E0D15B3081AC2903E /* WidgetPublisher.swift in Sources */,
 				4C9D2E7F1A3B5C6D8E0F2A1B /* StatusItemController.swift in Sources */,
 				6D69461968676235657D707F /* DeviceSnapshot.swift in Sources */,
+				67375A2D7BC634595E789300 /* ControlStep.swift in Sources */,
 				A1B2C3D4E5F60718293A4B5C /* ControlRequest.swift in Sources */,
 				D4E5F60718293A4B5C6D7E8F /* ControlRequestRelay.swift in Sources */,
+				40FF82D82B6C03E05D1B37C2 /* OneShotSession.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -436,6 +445,7 @@
 			files = (
 				BCD8B4BAE4364490844909F8 /* MarshallWidget.swift in Sources */,
 				7302BAB41325B3097FA9AB05 /* DeviceSnapshot.swift in Sources */,
+				6CB7E8AF33D560FD33108E9C /* ControlStep.swift in Sources */,
 				B2C3D4E5F60718293A4B5C6D /* ControlRequest.swift in Sources */,
 				C3D4E5F60718293A4B5C6D7E /* ControlIntents.swift in Sources */,
 			);

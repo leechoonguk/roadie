@@ -11,7 +11,53 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		8BE7EFCB3E70933190D08D09 /* DeviceSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 378BD62E671CC4BDE290B285 /* DeviceSnapshot.swift */; };
+		A076D6FA52B5DED3BA352A1B /* DeviceSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 378BD62E671CC4BDE290B285 /* DeviceSnapshot.swift */; };
+		3799CA968842BB7DB75A4029 /* ControlRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = C81093A7403426EED68A5BC8 /* ControlRequest.swift */; };
+		B1AE3DE20852AE76E937BFCF /* ControlRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = C81093A7403426EED68A5BC8 /* ControlRequest.swift */; };
+		B72568D101A47D8E1CA54483 /* ControlStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78D561C9308BED792018DCA0 /* ControlStep.swift */; };
+		1AD9579EAC39CA1D6C10D28D /* ControlStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78D561C9308BED792018DCA0 /* ControlStep.swift */; };
+		53A5ED067597B864D1629ACA /* MarshallScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7BC9456CAE87FBA50780CB9 /* MarshallScanner.swift */; };
+		7D5E0A8DEA6D1FBC40B41AEC /* MarshallScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7BC9456CAE87FBA50780CB9 /* MarshallScanner.swift */; };
+		4FBA09DB4346EFFF4F681ECB /* MarshallProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701546E7964119F302989701 /* MarshallProtocol.swift */; };
+		39197FF88F49AFFF4E8ADA03 /* MarshallProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701546E7964119F302989701 /* MarshallProtocol.swift */; };
+		3749D337619CD7035A4CCE35 /* OneShotSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F7AB69D277CE1234F8034E /* OneShotSession.swift */; };
+		5115A4E54456F3ED3899F6E9 /* OneShotSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F7AB69D277CE1234F8034E /* OneShotSession.swift */; };
+		9FB6A8306DC1634D6887628F /* WidgetPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67DBB799A2DF96E738AD71B /* WidgetPublisher.swift */; };
+		C07BFC036E9DC688A5FEA7ED /* ControlRequestRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DCAEDE6174594A5C04C4CE /* ControlRequestRelay.swift */; };
+		DAB72CE67F323B9F236578AB /* MarshallBleModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BF59A67EE53DFA1EF0EFE36 /* MarshallBleModule.swift */; };
+		081F51F06151B7B83E401676 /* MarshallBleModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 346346E7CD81B62A22CC3C45 /* MarshallBleModule.m */; };
+		36F23BBD42D22656396FA9CC /* WidgetBridgeModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9CED765FAA12A7A8CBB15BD /* WidgetBridgeModule.swift */; };
+		289ABE975C44E12C98F28629 /* WidgetBridgeModule.m in Sources */ = {isa = PBXBuildFile; fileRef = F5EA48275C52B170C288FD90 /* WidgetBridgeModule.m */; };
+		946330DF65D97D441CB5126F /* ControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16367D7B37CB18C4E7E9A649 /* ControlIntents.swift */; };
+		90EE6B2739570F053A04A4DC /* ControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16367D7B37CB18C4E7E9A649 /* ControlIntents.swift */; };
+		10173A7D2DE30D59325F1A27 /* MarshallWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A84D7BC4F7556156F8D50E1 /* MarshallWidget.swift */; };
+		3A6CE0E9084E33EC76A89F6D /* RoadieWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6C4AFB15A76867BB1ECD3790 /* RoadieWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2BAC918727A20098B0526534 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EED5EE9CA25B5FF4A577F2E8;
+			remoteInfo = RoadieWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		6768B5ADF244745032BEEF54 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				3A6CE0E9084E33EC76A89F6D /* RoadieWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* MarshallBluetooth.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MarshallBluetooth.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -24,6 +70,24 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = MarshallBluetooth/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = MarshallBluetooth/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		378BD62E671CC4BDE290B285 /* DeviceSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DeviceSnapshot.swift; path = Shared/DeviceSnapshot.swift; sourceTree = "<group>"; };
+		C81093A7403426EED68A5BC8 /* ControlRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ControlRequest.swift; path = Shared/ControlRequest.swift; sourceTree = "<group>"; };
+		78D561C9308BED792018DCA0 /* ControlStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ControlStep.swift; path = Shared/ControlStep.swift; sourceTree = "<group>"; };
+		C7BC9456CAE87FBA50780CB9 /* MarshallScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MarshallScanner.swift; path = MarshallBluetooth-macOS/Native/Core/MarshallScanner.swift; sourceTree = "<group>"; };
+		701546E7964119F302989701 /* MarshallProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MarshallProtocol.swift; path = MarshallBluetooth-macOS/Native/Core/MarshallProtocol.swift; sourceTree = "<group>"; };
+		78F7AB69D277CE1234F8034E /* OneShotSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OneShotSession.swift; path = MarshallBluetooth-macOS/Native/Core/OneShotSession.swift; sourceTree = "<group>"; };
+		F67DBB799A2DF96E738AD71B /* WidgetPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WidgetPublisher.swift; path = MarshallBluetooth-macOS/Native/Core/WidgetPublisher.swift; sourceTree = "<group>"; };
+		73DCAEDE6174594A5C04C4CE /* ControlRequestRelay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ControlRequestRelay.swift; path = MarshallBluetooth-macOS/Native/Core/ControlRequestRelay.swift; sourceTree = "<group>"; };
+		3BF59A67EE53DFA1EF0EFE36 /* MarshallBleModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MarshallBleModule.swift; path = MarshallBluetooth-macOS/Native/MarshallBleModule.swift; sourceTree = "<group>"; };
+		346346E7CD81B62A22CC3C45 /* MarshallBleModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = MarshallBleModule.m; path = MarshallBluetooth-macOS/Native/MarshallBleModule.m; sourceTree = "<group>"; };
+		C9CED765FAA12A7A8CBB15BD /* WidgetBridgeModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WidgetBridgeModule.swift; path = MarshallBluetooth-macOS/Native/WidgetBridgeModule.swift; sourceTree = "<group>"; };
+		F5EA48275C52B170C288FD90 /* WidgetBridgeModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = WidgetBridgeModule.m; path = MarshallBluetooth-macOS/Native/WidgetBridgeModule.m; sourceTree = "<group>"; };
+		16367D7B37CB18C4E7E9A649 /* ControlIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ControlIntents.swift; path = MarshallWidget/ControlIntents.swift; sourceTree = "<group>"; };
+		9A84D7BC4F7556156F8D50E1 /* MarshallWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MarshallWidget.swift; path = MarshallWidget/MarshallWidget.swift; sourceTree = "<group>"; };
+		6C4AFB15A76867BB1ECD3790 /* RoadieWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RoadieWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		8299DD58517E0DD559A67825 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B31F046EE0165C8990D67400 /* RoadieWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoadieWidget.entitlements; sourceTree = "<group>"; };
+		747A7A1B6BC98851E6A83262 /* MarshallBluetooth.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = MarshallBluetooth.entitlements; path = MarshallBluetooth/MarshallBluetooth.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +96,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				0C80B921A6F3F58F76C31292 /* libPods-MarshallBluetooth.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		50DCC55189A287D91975D150 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -46,6 +117,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				747A7A1B6BC98851E6A83262 /* MarshallBluetooth.entitlements */,
 			);
 			name = MarshallBluetooth;
 			sourceTree = "<group>";
@@ -70,6 +142,8 @@
 			isa = PBXGroup;
 			children = (
 				13B07FAE1A68108700A75B9A /* MarshallBluetooth */,
+				D16C93761D0155624F390D4A /* Shared with macOS */,
+				140029975143D66F754FE564 /* RoadieWidget */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -84,6 +158,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* MarshallBluetooth.app */,
+				6C4AFB15A76867BB1ECD3790 /* RoadieWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,6 +170,37 @@
 				5709B34CF0A7D63546082F79 /* Pods-MarshallBluetooth.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		D16C93761D0155624F390D4A /* Shared with macOS */ = {
+			isa = PBXGroup;
+			children = (
+				378BD62E671CC4BDE290B285 /* DeviceSnapshot.swift */,
+				C81093A7403426EED68A5BC8 /* ControlRequest.swift */,
+				78D561C9308BED792018DCA0 /* ControlStep.swift */,
+				C7BC9456CAE87FBA50780CB9 /* MarshallScanner.swift */,
+				701546E7964119F302989701 /* MarshallProtocol.swift */,
+				78F7AB69D277CE1234F8034E /* OneShotSession.swift */,
+				F67DBB799A2DF96E738AD71B /* WidgetPublisher.swift */,
+				73DCAEDE6174594A5C04C4CE /* ControlRequestRelay.swift */,
+				3BF59A67EE53DFA1EF0EFE36 /* MarshallBleModule.swift */,
+				346346E7CD81B62A22CC3C45 /* MarshallBleModule.m */,
+				C9CED765FAA12A7A8CBB15BD /* WidgetBridgeModule.swift */,
+				F5EA48275C52B170C288FD90 /* WidgetBridgeModule.m */,
+				16367D7B37CB18C4E7E9A649 /* ControlIntents.swift */,
+				9A84D7BC4F7556156F8D50E1 /* MarshallWidget.swift */,
+			);
+			name = "Shared with macOS";
+			path = ../macos;
+			sourceTree = "<group>";
+		};
+		140029975143D66F754FE564 /* RoadieWidget */ = {
+			isa = PBXGroup;
+			children = (
+				8299DD58517E0DD559A67825 /* Info.plist */,
+				B31F046EE0165C8990D67400 /* RoadieWidget.entitlements */,
+			);
+			path = RoadieWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -109,17 +215,36 @@
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
+				6768B5ADF244745032BEEF54 /* Embed Foundation Extensions */,
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				13D933E62CF4C38F5ED4B26F /* PBXTargetDependency */,
 			);
 			name = MarshallBluetooth;
 			productName = MarshallBluetooth;
 			productReference = 13B07F961A680F5B00A75B9A /* MarshallBluetooth.app */;
 			productType = "com.apple.product-type.application";
+		};
+		EED5EE9CA25B5FF4A577F2E8 /* RoadieWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1F17AE6F2FAF0B1FA2B952DD /* Build configuration list for PBXNativeTarget "RoadieWidget" */;
+			buildPhases = (
+				5A4EA1AFAA3029103D5FAAC9 /* Sources */,
+				50DCC55189A287D91975D150 /* Frameworks */,
+				36DF65A2CC6DAF44D82BB1AE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RoadieWidget;
+			productName = RoadieWidget;
+			productReference = 6C4AFB15A76867BB1ECD3790 /* RoadieWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -148,6 +273,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* MarshallBluetooth */,
+				EED5EE9CA25B5FF4A577F2E8 /* RoadieWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -159,6 +285,13 @@
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		36DF65A2CC6DAF44D82BB1AE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,10 +378,46 @@
 			buildActionMask = 2147483647;
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				8BE7EFCB3E70933190D08D09 /* DeviceSnapshot.swift in Sources */,
+				3799CA968842BB7DB75A4029 /* ControlRequest.swift in Sources */,
+				B72568D101A47D8E1CA54483 /* ControlStep.swift in Sources */,
+				53A5ED067597B864D1629ACA /* MarshallScanner.swift in Sources */,
+				4FBA09DB4346EFFF4F681ECB /* MarshallProtocol.swift in Sources */,
+				3749D337619CD7035A4CCE35 /* OneShotSession.swift in Sources */,
+				9FB6A8306DC1634D6887628F /* WidgetPublisher.swift in Sources */,
+				C07BFC036E9DC688A5FEA7ED /* ControlRequestRelay.swift in Sources */,
+				DAB72CE67F323B9F236578AB /* MarshallBleModule.swift in Sources */,
+				081F51F06151B7B83E401676 /* MarshallBleModule.m in Sources */,
+				36F23BBD42D22656396FA9CC /* WidgetBridgeModule.swift in Sources */,
+				289ABE975C44E12C98F28629 /* WidgetBridgeModule.m in Sources */,
+				946330DF65D97D441CB5126F /* ControlIntents.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A4EA1AFAA3029103D5FAAC9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A076D6FA52B5DED3BA352A1B /* DeviceSnapshot.swift in Sources */,
+				B1AE3DE20852AE76E937BFCF /* ControlRequest.swift in Sources */,
+				1AD9579EAC39CA1D6C10D28D /* ControlStep.swift in Sources */,
+				7D5E0A8DEA6D1FBC40B41AEC /* MarshallScanner.swift in Sources */,
+				39197FF88F49AFFF4E8ADA03 /* MarshallProtocol.swift in Sources */,
+				5115A4E54456F3ED3899F6E9 /* OneShotSession.swift in Sources */,
+				90EE6B2739570F053A04A4DC /* ControlIntents.swift in Sources */,
+				10173A7D2DE30D59325F1A27 /* MarshallWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		13D933E62CF4C38F5ED4B26F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EED5EE9CA25B5FF4A577F2E8 /* RoadieWidget */;
+			targetProxy = 2BAC918727A20098B0526534 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
@@ -257,11 +426,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MarshallBluetooth/MarshallBluetooth.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = X575PLRF8N;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = MarshallBluetooth/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -286,10 +456,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MarshallBluetooth/MarshallBluetooth.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = X575PLRF8N;
 				INFOPLIST_FILE = MarshallBluetooth/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -356,7 +527,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -422,7 +593,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -446,6 +617,51 @@
 			};
 			name = Release;
 		};
+		53EF30DF21FC96174F58831F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = RoadieWidget/RoadieWidget.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X575PLRF8N;
+				INFOPLIST_FILE = RoadieWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.uk.marshallbluetooth.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FBA9503D5E7B6F430BEC2E9B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = RoadieWidget/RoadieWidget.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X575PLRF8N;
+				INFOPLIST_FILE = RoadieWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.uk.marshallbluetooth.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -463,6 +679,15 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1F17AE6F2FAF0B1FA2B952DD /* Build configuration list for PBXNativeTarget "RoadieWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				53EF30DF21FC96174F58831F /* Debug */,
+				FBA9503D5E7B6F430BEC2E9B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

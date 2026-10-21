@@ -16,10 +16,15 @@ import {
   Tray,
 } from 'electron';
 
+import {
+  applyChange,
+  type ControlAction,
+  describeVolume,
+  offsetFromFlat,
+  stepControl,
+} from '../../src/controls';
 import type { WidgetPayload } from '../../src/native/widgetBridge';
-import { CHANNELS, type ChooserDevice } from './bridge';
-import { EQ_STEPS } from '../../src/protocol';
-import { offsetFromFlat, type TrayAction, trayStep } from './tray';
+import { CHANNELS, type ChooserDevice, type ControlRequest } from './bridge';
 
 const state = {
   window: null as BrowserWindow | null,
@@ -114,13 +119,16 @@ function answer(deviceId: string): void {
   choose?.(deviceId);
 }
 
-function apply(action: TrayAction): void {
-  const step = trayStep(state.payload, action);
-  if (step === null) {
+/** Shows the step at once, then has the window apply it; the window's republish corrects it. */
+function apply(action: ControlAction): void {
+  const payload = state.payload;
+  const change = payload === null ? null : stepControl(payload, action);
+  if (payload === null || change === null) {
     return;
   }
-  state.payload = step.payload;
-  state.window?.webContents.send(CHANNELS.control, step.request);
+  state.payload = applyChange(payload, change);
+  const request: ControlRequest = { identifier: payload.identifier, action };
+  state.window?.webContents.send(CHANNELS.control, request);
   updateTray();
 }
 
@@ -138,27 +146,26 @@ function speakerItems(payload: WidgetPayload | null): MenuItemConstructorOptions
   if (payload === null) {
     return [{ label: 'No speaker selected', enabled: false }, { type: 'separator' }];
   }
-  const can = (action: TrayAction) => trayStep(payload, action) !== null;
-  const volume =
-    payload.volume === null ? '—' : `${payload.volume} of ${payload.maxVolume ?? '—'}`;
-  const tone = (value: number | null) => (value === null ? '—' : offsetFromFlat(value));
+  // A press connects for itself when the window has no connection, so only an
+  // unread value or the end of a scale disables an item.
+  const item = (label: string, action: ControlAction): MenuItemConstructorOptions => ({
+    label,
+    enabled: stepControl(payload, action) !== null,
+    click: () => apply(action),
+  });
   return [
     { label: `${payload.name} — ${payload.isConnected ? 'Connected' : 'Not connected'}`, enabled: false },
     { type: 'separator' },
-    { label: `Volume ${volume}`, enabled: false },
-    { label: 'Volume Up', enabled: can({ kind: 'volume', step: 1 }), click: () => apply({ kind: 'volume', step: 1 }) },
-    { label: 'Volume Down', enabled: can({ kind: 'volume', step: -1 }), click: () => apply({ kind: 'volume', step: -1 }) },
+    { label: `Volume ${describeVolume(payload)}`, enabled: false },
+    item('Volume Up', { kind: 'volume', step: 1 }),
+    item('Volume Down', { kind: 'volume', step: -1 }),
     { type: 'separator' },
-    { label: `Bass ${tone(payload.bass)} · Treble ${tone(payload.treble)}`, enabled: false },
-    { label: 'Bass Up', enabled: can({ kind: 'bass', step: 1 }), click: () => apply({ kind: 'bass', step: 1 }) },
-    { label: 'Bass Down', enabled: can({ kind: 'bass', step: -1 }), click: () => apply({ kind: 'bass', step: -1 }) },
-    { label: 'Treble Up', enabled: can({ kind: 'treble', step: 1 }), click: () => apply({ kind: 'treble', step: 1 }) },
-    { label: 'Treble Down', enabled: can({ kind: 'treble', step: -1 }), click: () => apply({ kind: 'treble', step: -1 }) },
-    {
-      label: 'Reset Tone to Flat',
-      enabled: can({ kind: 'flat' }) && !(payload.bass === EQ_STEPS.flat && payload.treble === EQ_STEPS.flat),
-      click: () => apply({ kind: 'flat' }),
-    },
+    { label: `Bass ${offsetFromFlat(payload.bass)} · Treble ${offsetFromFlat(payload.treble)}`, enabled: false },
+    item('Bass Up', { kind: 'bass', step: 1 }),
+    item('Bass Down', { kind: 'bass', step: -1 }),
+    item('Treble Up', { kind: 'treble', step: 1 }),
+    item('Treble Down', { kind: 'treble', step: -1 }),
+    item('Reset Tone to Flat', { kind: 'flat' }),
     { type: 'separator' },
   ];
 }

@@ -2,6 +2,7 @@
  * The IPC contract between the Electron main process and the window. Both
  * sides import these names, so a channel cannot be renamed on one side only.
  */
+import type { ControlAction } from '../../src/controls';
 import type { WidgetPayload } from '../../src/native/widgetBridge';
 
 export const CHANNELS = {
@@ -25,10 +26,11 @@ export interface ChooserDevice {
   deviceName: string;
 }
 
-/** A change the tray asks the window to make; values are absolute, not steps. */
-export type ControlRequest =
-  | { kind: 'volume'; identifier: string; level: number }
-  | { kind: 'eq'; identifier: string; bass: number; treble: number };
+/** A tray press for the window to apply: a step, taken from the speaker's current value. */
+export interface ControlRequest {
+  identifier: string;
+  action: ControlAction;
+}
 
 /** What the preload script exposes as `window.roadie`. */
 export interface RoadieBridge {

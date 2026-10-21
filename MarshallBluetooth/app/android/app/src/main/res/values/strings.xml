@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Roadie</string>
+    <string name="widget_description">Volume and tone of your Marshall speaker</string>
 </resources>

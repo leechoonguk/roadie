@@ -15,7 +15,8 @@
     "paths": {
       "react": ["../node_modules/@types/react"],
       "react/*": ["../node_modules/@types/react/*"],
-      "react-native": ["../node_modules/react-native"]
+      "react-native": ["../node_modules/react-native"],
+      "react-native-web": ["../node_modules/react-native"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "build.ts", "../__tests__/desktop.test.ts"]

@@ -91,9 +91,9 @@ func snapshotRejectsValuesAWidgetGaugeWouldMisdraw(field: String, extra: [String
   let store = SharedStore(
     directory: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
   try ControlRequestQueue.enqueue(.volume(15), in: store)
-  try ControlRequestQueue.enqueue(.bass(6), in: store)
+  try ControlRequestQueue.enqueue(.eq(bass: 6, treble: 5), in: store)
 
-  #expect(ControlRequestQueue.drain(store) == [.volume(15), .bass(6)])
+  #expect(ControlRequestQueue.drain(store) == [.volume(15), .eq(bass: 6, treble: 5)])
   #expect(ControlRequestQueue.drain(store) == [])
 }
 

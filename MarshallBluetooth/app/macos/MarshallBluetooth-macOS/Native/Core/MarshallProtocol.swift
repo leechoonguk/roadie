@@ -62,7 +62,7 @@ struct EQSettings: Equatable {
 /// The maximum has its own characteristic (31 on an ACTON III); a write made
 /// before it is read is clamped to `fallbackMaximum`, that measured value.
 enum VolumeLevel {
-  static let fallbackMaximum = 31
+  static let fallbackMaximum = VolumeScale.fallbackMaximum
 
   static func decode(_ data: Data) -> Int? {
     data.count == 1 ? Int(data[data.startIndex]) : nil
@@ -71,14 +71,6 @@ enum VolumeLevel {
   static func encode(_ level: Int, maximum: Int?) -> Data {
     Data([UInt8(min(max(level, 0), maximum ?? fallbackMaximum))])
   }
-}
-
-/// Control state from one notification or read; a nil field was not reported.
-struct ControlState: Equatable {
-  var volume: Int?
-  var maxVolume: Int?
-  var bass: Int?
-  var treble: Int?
 }
 
 // MARK: - GATT values

@@ -1,8 +1,8 @@
 /**
  * Bundles the desktop app into `out/`: the main process, the preload script,
  * and the window — which is `app/App.tsx` itself, with `react-native` resolved
- * to react-native-web and the three platform files (the two native wrappers
- * and the AppKit theme) swapped for their `src/renderer/` counterparts.
+ * to react-native-web (through `src/renderer/reactNative.ts`) and the two native
+ * wrappers swapped for their `src/renderer/` counterparts.
  *
  * Run with `make desktop-build`; node strips the types, so no compile step.
  */
@@ -23,7 +23,6 @@ const production = process.env.NODE_ENV !== 'development';
 const SWAPS: Array<[RegExp, string]> = [
   [/\/native\/marshallBle$/, join(here, 'src', 'renderer', 'marshallBle.ts')],
   [/\/native\/widgetBridge$/, join(here, 'src', 'renderer', 'widgetBridge.ts')],
-  [/^\.\.?\/(?:\.\.\/)?theme$/, join(here, 'src', 'renderer', 'theme.ts')],
 ];
 
 /**
@@ -34,7 +33,9 @@ const SWAPS: Array<[RegExp, string]> = [
 const desktopResolution: esbuild.Plugin = {
   name: 'desktop-resolution',
   setup(build) {
-    build.onResolve({ filter: /^react-native$/ }, () => ({
+    // The shim re-exports react-native-web; its own import of it resolves normally.
+    build.onResolve({ filter: /^react-native$/ }, () => ({ path: join(here, 'src', 'renderer', 'reactNative.ts') }));
+    build.onResolve({ filter: /^react-native-web$/ }, () => ({
       path: join(modules, 'react-native-web', 'dist', 'index.js'),
     }));
     build.onResolve({ filter: /^react(?:-dom)?(?:\/.*)?$/ }, async args => {
