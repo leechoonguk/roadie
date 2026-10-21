@@ -9,7 +9,7 @@ import {
   encodeEQ,
   encodeVolume,
   UUIDS,
-} from '../desktop/src/protocol';
+} from '../src/protocol';
 import { marshallBle } from '../desktop/src/renderer/marshallBle';
 import { offsetFromFlat, trayStep } from '../desktop/src/tray';
 import type { WidgetPayload } from '../src/native/widgetBridge';

@@ -45,8 +45,8 @@ const BLUETOOTH_HINTS: Partial<Record<BluetoothState, string>> = Platform.select
   },
 });
 
-/** Where the selected speaker also shows: the desktop widget on macOS, the tray elsewhere. */
-const MIRROR = Platform.select({ macos: 'the desktop widget', default: 'the tray menu' });
+/** Where the selected speaker also shows: the desktop widget on macOS, the tray on Windows/Linux, nowhere on a phone. */
+const MIRROR = Platform.select<string | null>({ macos: 'the desktop widget', web: 'the tray menu', default: null });
 
 /**
  * The window: the Marshall speakers in range and the selected one's controls.
@@ -129,9 +129,11 @@ export function DeviceScreen(): React.JSX.Element {
     }
     const timer = setTimeout(() => {
       publishToWidget(JSON.parse(widgetKey) as WidgetPayload)
-        .then(() =>
-          setWidgetNote(`Shown on ${MIRROR} · updated ${new Date().toLocaleTimeString()}`),
-        )
+        .then(() => {
+          if (MIRROR !== null) {
+            setWidgetNote(`Shown on ${MIRROR} · updated ${new Date().toLocaleTimeString()}`);
+          }
+        })
         .catch((error: unknown) =>
           setStatus(error instanceof Error ? error.message : String(error)),
         );

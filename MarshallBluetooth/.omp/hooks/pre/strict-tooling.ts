@@ -11,9 +11,9 @@ import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
  * too. The policy itself:
  *
  *   - The app is TypeScript (`app/`) and its native side is Swift with thin
- *     Objective-C bridge files (`app/macos/`). Swift or Objective-C anywhere
- *     else is native code outside the project the Xcode targets and
- *     `make swift-check` compile.
+ *     Objective-C bridge files (`app/macos/`, and the iOS app's `app/ios/`).
+ *     Swift or Objective-C anywhere else is native code outside the projects
+ *     the Xcode targets and `make swift-check` compile.
  *   - No Python, Ruby or shell scripts at all. Automation belongs in
  *     `.omp/hooks/` as TypeScript, runnable by a make target on every machine
  *     that has node. The CocoaPods `Podfile` and Bundler `Gemfile` are
@@ -27,7 +27,7 @@ import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
  * To add/remove locations: edit the allowlists below. No other logic changes.
  */
 const SCRIPT_ROOTS = [".omp/hooks/", ".omp/extensions/", "app/"];
-const NATIVE_ROOT = "app/macos/";
+const NATIVE_ROOTS = ["app/macos/", "app/ios/"];
 const FORBIDDEN_SCRIPTS = /\.(py|rb|sh|bash|zsh)$/;
 const NATIVE_SOURCES = /\.(swift|m|mm|h)$/;
 const ADHOC_SCRIPT_DIRS = /^(?:scripts|tools|bin|utils)\//;
@@ -87,14 +87,15 @@ function toolingViolation(path: string): { block: true; reason: string } | null 
     };
   }
 
-  if (NATIVE_SOURCES.test(path) && !path.startsWith(NATIVE_ROOT)) {
+  if (NATIVE_SOURCES.test(path) && !NATIVE_ROOTS.some((root) => path.startsWith(root))) {
     return {
       block: true,
       reason:
-        `\`${path}\` — 네이티브 소스는 app/macos/ 아래에만 둔다 (tooling.md)\n\n` +
+        `\`${path}\` — 네이티브 소스는 app/macos/ 또는 app/ios/ 아래에만 둔다 (tooling.md)\n\n` +
         "React-free 로직: app/macos/MarshallBluetooth-macOS/Native/Core/ 또는 app/macos/Shared/\n" +
         "RN 어댑터: app/macos/MarshallBluetooth-macOS/Native/*.swift + *.m\n" +
-        "위젯: app/macos/MarshallWidget/",
+        "위젯: app/macos/MarshallWidget/\n" +
+        "iOS 앱: app/ios/MarshallBluetooth/",
     };
   }
 

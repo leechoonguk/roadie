@@ -1,5 +1,5 @@
 .PHONY: help install pods start run build relaunch app-logs typecheck lint test swift-check swift-test ble-probe app-icon verify clean commit push \
-	desktop-install desktop-build desktop-start desktop-typecheck desktop-dist \
+	desktop-install desktop-build desktop-start desktop-typecheck desktop-dist android-apk ios-pods ios-build \
 	dist release unrelease \
 	check-app-duplicate-blocks check-app-macos-project check-app-native-boundary check-code-layout check-makefiles \
 	check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling check-verify
@@ -101,6 +101,17 @@ desktop-typecheck: ## Type-check the desktop app against DOM, Node and Web Bluet
 
 desktop-dist: desktop-build ## Package this OS's installers into app/desktop/release (usage: make desktop-dist v=x.y.z)
 	cd $(DESKTOP) && npx electron-builder --publish never $(if $(v),-c.extraMetadata.version=$(v))
+
+# iOS and Android (rule://root-makefile): the same screens on React Native, with
+# Bluetooth over react-native-ble-plx (app/mobile/src). `make start` serves both.
+android-apk: ## Build the Android APK, release-built and signed with the template's debug key (requires the Android SDK and JDK 17; v=x.y.z sets the version)
+	cd $(APP)/android && ./gradlew assembleRelease $(if $(v),-ProadieVersionName=$(v))
+
+ios-pods: ## Install CocoaPods for the iOS app (requires Xcode)
+	cd $(APP)/ios && pod install
+
+ios-build: ## Build the iOS app for the simulator, unsigned (requires Xcode and `make ios-pods`; a device build is signed in Xcode)
+	xcodebuild -workspace $(APP)/ios/MarshallBluetooth.xcworkspace -scheme MarshallBluetooth -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
 
 verify: lint typecheck test swift-check swift-test check-app-duplicate-blocks check-app-macos-project check-app-native-boundary check-code-layout check-makefiles check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling ## Run every gate that runs without Xcode
 

@@ -69,9 +69,12 @@ current version.
 5. Publishing the release starts `.github/workflows/desktop.yml`, which builds
    the Windows and Linux app (`app/desktop`, `make desktop-dist`) on GitHub's
    runners and attaches `Roadie-<version>-windows-setup.exe`, `…-linux-x86_64.AppImage`
-   and `…-linux-amd64.deb` to the same release a few minutes later. Those
-   installers are unsigned and carry no Apple key, so CI may build them; it only
-   adds assets and never touches the three above.
+   and `…-linux-amd64.deb` to the same release a few minutes later, and
+   `.github/workflows/native.yml` attaches `Roadie-<version>-android.apk`
+   (`make android-apk`, signed with the template's public debug key). None of
+   these carries an Apple key, so CI may build them; CI only adds assets and
+   never touches the three above. iOS has no release asset: installing it
+   needs the maintainer's Apple signing in Xcode.
 
 ## When It Fails
 

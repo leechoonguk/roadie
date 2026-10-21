@@ -18,7 +18,7 @@ import {
 
 import type { WidgetPayload } from '../../src/native/widgetBridge';
 import { CHANNELS, type ChooserDevice } from './bridge';
-import { EQ_STEPS } from './protocol';
+import { EQ_STEPS } from '../../src/protocol';
 import { offsetFromFlat, type TrayAction, trayStep } from './tray';
 
 const state = {

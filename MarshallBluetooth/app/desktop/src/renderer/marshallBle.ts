@@ -10,22 +10,18 @@
  */
 import type {
   BluetoothState,
-  ControlState,
   DeviceFailure,
   DeviceUpdate,
   DiscoveredDevice,
 } from '../../../src/native/marshallBle';
 import type { ChooserDevice, RoadieBridge } from '../bridge';
 import {
-  decodeBattery,
-  decodeEQ,
-  decodeString,
-  decodeVolume,
+  decodeCharacteristic,
   encodeEQ,
   encodeVolume,
   type EQSettings,
   UUIDS,
-} from '../protocol';
+} from '../../../src/protocol';
 
 export type {
   BluetoothState,
@@ -314,67 +310,19 @@ async function watch(
   }
 }
 
-/** Decodes one value into a report; a malformed value is dropped, as the Swift core does. */
+/** Applies one value: the EQ and maximum are kept for the next write, the rest is reported. */
 function handleValue(identifier: string, uuid: string, view: DataView): void {
-  const bytes = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+  const report = decodeCharacteristic(uuid, new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
+  if (report === null) {
+    return;
+  }
+  const { eq, maxVolume, ...fields } = report;
   const connection = connections.get(identifier);
-  const update: DeviceUpdate = { identifier, isConnected: true };
-  let controlState: ControlState | undefined;
-  switch (uuid) {
-    case UUIDS.batteryLevel: {
-      const percent = decodeBattery(bytes);
-      if (percent === null) {
-        return;
-      }
-      update.batteryPercent = percent;
-      break;
-    }
-    case UUIDS.modelNumber:
-    case UUIDS.firmwareVersion: {
-      const text = decodeString(bytes);
-      if (text === null) {
-        return;
-      }
-      update.deviceInfo = uuid === UUIDS.modelNumber ? { model: text } : { firmwareVersion: text };
-      break;
-    }
-    case UUIDS.volume: {
-      const level = decodeVolume(bytes);
-      if (level === null) {
-        return;
-      }
-      controlState = { volume: level };
-      break;
-    }
-    case UUIDS.maxVolume: {
-      const maximum = decodeVolume(bytes);
-      if (maximum === null) {
-        return;
-      }
-      if (connection !== undefined) {
-        connection.maxVolume = maximum;
-      }
-      controlState = { maxVolume: maximum };
-      break;
-    }
-    case UUIDS.equalizer: {
-      const eq = decodeEQ(bytes);
-      if (eq === null) {
-        return;
-      }
-      if (connection !== undefined) {
-        connection.eq = eq;
-      }
-      controlState = { bass: eq.bass, treble: eq.treble };
-      break;
-    }
-    default:
-      return;
+  if (connection !== undefined) {
+    connection.eq = eq ?? connection.eq;
+    connection.maxVolume = maxVolume ?? connection.maxVolume;
   }
-  if (controlState !== undefined) {
-    update.controlState = controlState;
-  }
-  emit(listeners.deviceUpdated, update);
+  emit(listeners.deviceUpdated, { identifier, isConnected: true, ...fields });
 }
 
 function connected(identifier: string): Connection | null {

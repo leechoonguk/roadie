@@ -6,7 +6,7 @@
  */
 import type { WidgetPayload } from '../../src/native/widgetBridge';
 import type { ControlRequest } from './bridge';
-import { clamp, EQ_STEPS, FALLBACK_MAX_VOLUME } from './protocol';
+import { clamp, EQ_STEPS, FALLBACK_MAX_VOLUME } from '../../src/protocol';
 
 export type TrayAction =
   | { kind: 'volume'; step: number }
