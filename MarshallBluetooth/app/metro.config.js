@@ -16,6 +16,16 @@ const ANDROID_SWAPS = [
 ];
 
 /**
+ * The CLI's own resolver comes in through the defaults: for macOS it maps
+ * `react-native` to `react-native-macos`. A `resolveRequest` here replaces it
+ * outright, so every request that is not an Android swap goes back through it —
+ * without it the macOS bundle loads core React Native, whose `Platform` has no
+ * macOS file, and the app dies at launch.
+ */
+const defaults = getDefaultConfig(__dirname);
+const frameworkResolve = defaults.resolver.resolveRequest;
+
+/**
  * Metro configuration
  * https://reactnative.dev/docs/metro
  *
@@ -30,9 +40,11 @@ const config = {
           return { type: 'sourceFile', filePath: swap[1] };
         }
       }
-      return context.resolveRequest(context, moduleName, platform);
+      return frameworkResolve
+        ? frameworkResolve(context, moduleName, platform)
+        : context.resolveRequest(context, moduleName, platform);
     },
   },
 };
 
-module.exports = mergeConfig(getDefaultConfig(__dirname), config);
+module.exports = mergeConfig(defaults, config);

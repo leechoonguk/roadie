@@ -23,7 +23,7 @@ import { spawnSync } from "node:child_process";
 // @ts-expect-error — Node builtin, not project-compiled
 import { createHash } from "node:crypto";
 // @ts-expect-error — Node builtin, not project-compiled
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 // @ts-expect-error — Node builtin, not project-compiled
 import { join } from "node:path";
 // @ts-expect-error — Node builtin, not project-compiled
@@ -38,18 +38,29 @@ declare const process: { argv: string[]; exit(code?: number): never; env: Record
 
 /** The GitHub repository releases are published to. */
 export const RELEASE_REPO = "leechoonguk/roadie";
-/** The app archive and the feed; no version in either name, so `latest/download/<name>` always resolves. */
-export const ARCHIVE_ASSET = "Roadie.zip";
+/** The feed and its checksums; no version in either name, so `latest/download/<name>` always resolves. */
 export const FEED_ASSET = "appcast.xml";
 export const CHECKSUMS_ASSET = "checksums.txt";
-/** Every file a release carries; `make release` refuses a published release missing one. */
-export const RELEASE_ASSETS = [ARCHIVE_ASSET, FEED_ASSET, CHECKSUMS_ASSET];
 /** What every installed copy reads: the app's `SUFeedURL` must equal it. */
 export const FEED_URL = `https://github.com/${RELEASE_REPO}/releases/latest/download/${FEED_ASSET}`;
 /** The keychain account `generate_keys` stored Roadie's EdDSA key under. */
 export const SPARKLE_ACCOUNT = "roadie";
 /** Sparkle's command-line tools, shipped inside its pod. */
 export const SPARKLE_BIN = "app/macos/Pods/Sparkle/bin";
+
+/**
+ * The Mac's file on the release, named per OS like the others: a disk image a
+ * person opens and drags Roadie from into Applications, and the archive Sparkle
+ * downloads and installs from (the appcast names this file for its version).
+ */
+export function macAsset(version: string): string {
+  return `Roadie-${version}-macos.dmg`;
+}
+
+/** Every file `make release` publishes for `version`; it refuses a published release missing one. */
+export function releaseAssets(version: string): string[] {
+  return [macAsset(version), FEED_ASSET, CHECKSUMS_ASSET];
+}
 
 const WORKSPACE = "app/macos/MarshallBluetooth.xcworkspace";
 const SCHEME = "MarshallBluetooth-macOS";
@@ -72,7 +83,7 @@ const root = resolveProjectRoot();
 // Commands
 // ============================================================
 
-/** Builds `version` in Release, checks the bundle, and writes the three assets into the dist directory. */
+/** Builds `version` in Release, checks the bundle, and writes the disk image, the feed and the checksums into the dist directory. */
 export function dist(version: string | undefined): void {
   if (version === undefined || !VERSION.test(version)) fail("usage: make dist v=x.y.z (no leading v)");
   const publicKey = keychainPublicKey();
@@ -94,20 +105,19 @@ export function dist(version: string | undefined): void {
 
   rmSync(join(root, DIST_DIR), { recursive: true, force: true });
   mkdirSync(join(root, DIST_DIR), { recursive: true });
-  const archive = `${DIST_DIR}/${ARCHIVE_ASSET}`;
-  // ditto keeps the bundle's symlinks and extended attributes, which a signed framework needs.
-  run("ditto", ["-c", "-k", "--sequesterRsrc", "--keepParent", BUILT_APP, archive]);
+  const image = `${DIST_DIR}/${macAsset(version)}`;
+  diskImage(image);
 
-  const signature = output(`${SPARKLE_BIN}/sign_update`, ["--account", SPARKLE_ACCOUNT, "-p", archive]).trim();
+  const signature = output(`${SPARKLE_BIN}/sign_update`, ["--account", SPARKLE_ACCOUNT, "-p", image]).trim();
   if (!/^[A-Za-z0-9+/]{86}==$/.test(signature)) fail(`sign_update printed no EdDSA signature: '${signature}'`);
-  run(`${SPARKLE_BIN}/sign_update`, ["--account", SPARKLE_ACCOUNT, "--verify", archive, signature]);
-  const length = statSync(join(root, archive)).size;
-  const url = `https://github.com/${RELEASE_REPO}/releases/download/v${version}/${ARCHIVE_ASSET}`;
+  run(`${SPARKLE_BIN}/sign_update`, ["--account", SPARKLE_ACCOUNT, "--verify", image, signature]);
+  const length = statSync(join(root, image)).size;
+  const url = `https://github.com/${RELEASE_REPO}/releases/download/v${version}/${macAsset(version)}`;
   writeFileSync(join(root, DIST_DIR, FEED_ASSET), appcast(version, url, length, signature));
 
-  const sums = [ARCHIVE_ASSET, FEED_ASSET].map((name) => `${sha256(`${DIST_DIR}/${name}`)}  ${name}`);
+  const sums = [macAsset(version), FEED_ASSET].map((name) => `${sha256(`${DIST_DIR}/${name}`)}  ${name}`);
   writeFileSync(join(root, DIST_DIR, CHECKSUMS_ASSET), `${sums.join("\n")}\n`);
-  say(`dist ready: ${RELEASE_ASSETS.map((name) => `${DIST_DIR}/${name}`).join(", ")}`);
+  say(`dist ready: ${releaseAssets(version).map((name) => `${DIST_DIR}/${name}`).join(", ")}`);
 }
 
 /** Tags the next version, builds it, publishes the release, and reads it back the way installed copies do. */
@@ -155,18 +165,25 @@ export function release(bump: string | undefined, dryRun: boolean): void {
   run("git", ["push", "-q", "origin", tag]);
   run("gh", [
     "release", "create", tag, "-R", RELEASE_REPO, "--verify-tag", "--title", `Roadie ${tag}`, "--notes", notes,
-    ...RELEASE_ASSETS.map((name) => `${DIST_DIR}/${name}`),
+    ...releaseAssets(next).map((name) => `${DIST_DIR}/${name}`),
   ]);
 
-  // 5. Read it back: every asset is attached, and the feed installed copies read names this version.
+  // 5. Read it back: every asset is attached, and the latest release's feed names this version.
   const attached = new Set(
     output("gh", ["release", "view", tag, "-R", RELEASE_REPO, "--json", "assets", "--jq", ".assets[].name"]).split("\n"),
   );
-  const missing = RELEASE_ASSETS.filter((name) => !attached.has(name));
+  const missing = releaseAssets(next).filter((name) => !attached.has(name));
   if (missing.length > 0) fail(`release ${tag} is missing ${missing.join(", ")} — make unrelease v=${tag}, then release again`);
-  const feed = output("curl", ["-fsSL", FEED_URL]);
+  const feed = output("gh", ["release", "download", "-R", RELEASE_REPO, "--pattern", FEED_ASSET, "--output", "-"]);
   if (!feed.includes(`<sparkle:version>${next}</sparkle:version>`)) {
-    fail(`${FEED_URL} does not serve ${next} yet — installed copies still see the previous release`);
+    fail(`the latest release's ${FEED_ASSET} does not name ${next} — installed copies still see the previous release`);
+  }
+  const visibility = output("gh", ["repo", "view", RELEASE_REPO, "--json", "visibility", "--jq", ".visibility"]).trim();
+  if (visibility !== "PUBLIC") {
+    say(
+      `warning: ${RELEASE_REPO} is ${visibility.toLowerCase()} — installed copies download without logging in, ` +
+        `so none can fetch ${FEED_URL} or this release until the repository is public`,
+    );
   }
   say(`released ${tag}: https://github.com/${RELEASE_REPO}/releases/tag/${tag}`);
 }
@@ -180,22 +197,26 @@ export function unrelease(tag: string | undefined): void {
 }
 
 /**
- * Installs the published release the way a user gets it, and makes it the only
- * Roadie macOS knows: build copies are unregistered from LaunchServices and the
- * widget host, so the widget, Spotlight and `open -b` all reach `/Applications`.
- * Development builds stay on disk; `make relaunch` registers one again.
+ * Installs the latest published release the way a user gets it — its disk image —
+ * and makes it the only Roadie macOS knows: build copies are unregistered from
+ * LaunchServices and the widget host, so the widget, Spotlight and `open -b` all
+ * reach `/Applications`. Downloads through `gh`, which also reaches a private
+ * repository. Development builds stay on disk; `make relaunch` registers one again.
  */
 export function install(): void {
   const work = mkdtempSync(join(tmpdir(), "roadie-install-"));
+  const mount = join(work, "mount");
+  let attached = false;
   try {
-    const base = `https://github.com/${RELEASE_REPO}/releases/latest/download`;
-    run("curl", ["-fsSL", "-o", join(work, ARCHIVE_ASSET), `${base}/${ARCHIVE_ASSET}`]);
-    const sums = output("curl", ["-fsSL", `${base}/${CHECKSUMS_ASSET}`]);
-    const expected = sums.split("\n").find((line) => line.trim().endsWith(`  ${ARCHIVE_ASSET}`))?.split(" ")[0];
-    const actual = createHash("sha256").update(readFileSync(join(work, ARCHIVE_ASSET))).digest("hex");
-    if (expected !== actual) fail(`${ARCHIVE_ASSET}: sha256 ${actual} does not match ${CHECKSUMS_ASSET} (${expected ?? "no entry"})`);
-    run("ditto", ["-x", "-k", join(work, ARCHIVE_ASSET), work]);
-    run("codesign", ["--verify", "--deep", "--strict", join(work, "Roadie.app")]);
+    run("gh", ["release", "download", "-R", RELEASE_REPO, "--pattern", "*-macos.dmg", "--pattern", CHECKSUMS_ASSET, "--dir", work]);
+    const sums: string = readFileSync(join(work, CHECKSUMS_ASSET), "utf-8");
+    const [expected, image] = sums.split("\n").find((line: string) => line.trim().endsWith("-macos.dmg"))?.split(/\s+/) ?? [];
+    if (image === undefined) fail(`${CHECKSUMS_ASSET} of the latest release names no -macos.dmg`);
+    const actual = createHash("sha256").update(readFileSync(join(work, image))).digest("hex");
+    if (expected !== actual) fail(`${image}: sha256 ${actual} does not match ${CHECKSUMS_ASSET} (${expected})`);
+    run("hdiutil", ["attach", "-quiet", "-nobrowse", "-readonly", "-mountpoint", mount, join(work, image)]);
+    attached = true;
+    run("codesign", ["--verify", "--deep", "--strict", join(mount, "Roadie.app")]);
 
     spawnSync("pkill", ["-x", "Roadie"], { stdio: "ignore" });
     for (const copy of buildCopies()) {
@@ -204,13 +225,14 @@ export function install(): void {
       say(`unregistered ${copy}`);
     }
     rmSync(INSTALLED_APP, { recursive: true, force: true });
-    run("ditto", [join(work, "Roadie.app"), INSTALLED_APP]);
+    run("ditto", [join(mount, "Roadie.app"), INSTALLED_APP]);
     run(LSREGISTER, ["-f", INSTALLED_APP]);
     run("pluginkit", ["-a", `${INSTALLED_APP}/Contents/PlugIns/MarshallWidget.appex`]);
     run("open", [INSTALLED_APP]);
     spawnSync("killall", ["chronod"], { stdio: "ignore" });
     say(`installed Roadie ${plistValue(`${INSTALLED_APP}/Contents/Info.plist`, "CFBundleShortVersionString")} at ${INSTALLED_APP}`);
   } finally {
+    if (attached) spawnSync("hdiutil", ["detach", "-quiet", mount], { stdio: "ignore" });
     rmSync(work, { recursive: true, force: true });
   }
 }
@@ -231,6 +253,33 @@ function checkBundle(version: string): void {
     if (!existsSync(join(root, BUILT_APP, part))) fail(`${BUILT_APP}/${part} is missing from the Release build`);
   }
   run("codesign", ["--verify", "--deep", "--strict", BUILT_APP]);
+}
+
+/**
+ * The installer a Mac user opens: Roadie.app beside a link to /Applications, so
+ * installing is one drag. Signed with the identity that signed the app, then
+ * verified — a damaged image is what Sparkle and the user would both get.
+ */
+function diskImage(image: string): void {
+  const stage = mkdtempSync(join(tmpdir(), "roadie-dmg-"));
+  try {
+    run("ditto", [join(root, BUILT_APP), join(stage, "Roadie.app")]);
+    symlinkSync("/Applications", join(stage, "Applications"));
+    run("hdiutil", ["create", "-quiet", "-volname", "Roadie", "-srcfolder", stage, "-fs", "HFS+", "-format", "UDZO", "-ov", image]);
+  } finally {
+    rmSync(stage, { recursive: true, force: true });
+  }
+  run("codesign", ["--sign", signingIdentity(), "--timestamp=none", image]);
+  run("codesign", ["--verify", "--strict", image]);
+  run("hdiutil", ["verify", "-quiet", image]);
+}
+
+/** The certificate that signed the Release build (`codesign` prints it to stderr). */
+function signingIdentity(): string {
+  const details = spawnSync("codesign", ["-dvv", BUILT_APP], { cwd: root, encoding: "utf8" });
+  const identity = /^Authority=(.+)$/m.exec(String(details.stderr))?.[1];
+  if (identity === undefined) fail(`${BUILT_APP} carries no signing authority — the Release build was not signed`);
+  return identity;
 }
 
 /** Roadie bundles Spotlight finds in a build directory (Xcode's DerivedData or this project's build/). */

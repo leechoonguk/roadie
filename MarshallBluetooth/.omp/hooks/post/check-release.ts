@@ -24,7 +24,7 @@
  *      release, uploads only behind `github.event_name == 'release'`, builds
  *      branch pushes only (the version tag `make release` pushes would build
  *      twice), and never uploads a file named like one of the release's own
- *      assets — a clobbered `appcast.xml` or `Roadie.zip` ships a broken
+ *      assets — a clobbered `appcast.xml` or `Roadie-<v>-macos.dmg` ships a broken
  *      update to every installed Mac.
  *   7. Every platform's feed — Windows and Linux update from the GitHub
  *      release named by `publish` in `app/desktop/package.json`, and only when
@@ -48,7 +48,7 @@ import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
 import { touchesPath } from "../lib/hook-scope.ts";
 import { dormant, passLine } from "../lib/hook-dormancy.ts";
 import { resolveProjectRoot } from "../lib/hook-project-root.ts";
-import { FEED_URL, RELEASE_ASSETS, RELEASE_REPO } from "../lib/app-release.ts";
+import { FEED_URL, RELEASE_REPO, releaseAssets } from "../lib/app-release.ts";
 import { plistArray, plistString, plistTrue } from "../lib/app-xcode-project.ts";
 
 declare const process: { argv: string[]; exit(code?: number): never };
@@ -246,7 +246,7 @@ function checkWorkflows(): string[] {
     for (const token of uploaded) {
       const file = token.split("/").pop() ?? token;
       const pattern = new RegExp(`^${file.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`);
-      for (const asset of RELEASE_ASSETS.filter((own) => pattern.test(own))) {
+      for (const asset of releaseAssets("0.0.0").filter((own: string) => pattern.test(own))) {
         issues.push(`${path}: uploads ${token}, which matches the release's own ${asset} — --clobber would replace what every installed Mac updates from`);
       }
     }

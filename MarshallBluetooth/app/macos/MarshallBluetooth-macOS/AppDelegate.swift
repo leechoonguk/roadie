@@ -27,8 +27,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   /// Updates from GitHub Releases: `SUFeedURL` names the appcast `make release`
   /// publishes. A Debug build never starts it, so development runs are not
   /// offered the published version over themselves.
-  private let updater = SPUStandardUpdaterController(
-    startingUpdater: !AppDelegate.isDebugBuild, updaterDelegate: nil, userDriverDelegate: nil)
+  private let updatePresenter = UpdatePresenter()
+  private lazy var updater = SPUStandardUpdaterController(
+    startingUpdater: !AppDelegate.isDebugBuild, updaterDelegate: nil, userDriverDelegate: updatePresenter)
 
   override init() {
     let delegate = ReactNativeDelegate()
@@ -49,7 +50,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       updateItem: AppDelegate.isDebugBuild ? nil : updateMenuItem())
   }
 
-  /// The window's "Check for Updates" button; the menu item reaches Sparkle directly.
+  /// Every way to ask — the window's button, the menu item — comes here, so the
+  /// app is in front before Sparkle answers; otherwise "up to date" or the
+  /// update alert opens behind whatever window is active.
   @objc private func checkForUpdates() {
     NSApp.activate(ignoringOtherApps: true)
     updater.checkForUpdates(nil)
@@ -63,13 +66,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 #endif
   }
 
-  /// Sparkle validates the item itself: it is disabled while a check runs. A
-  /// Debug build gets no item — its updater never started.
+  /// Disabled while a check runs. A Debug build gets no item — its updater never started.
   private func updateMenuItem() -> NSMenuItem {
-    let item = NSMenuItem(
-      title: "Check for Updates…", action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)), keyEquivalent: "")
-    item.target = updater
+    let item = NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
+    item.target = self
     return item
+  }
+
+  @objc func validateMenuItem(_ item: NSMenuItem) -> Bool {
+    item.action != #selector(checkForUpdates) || updater.updater.canCheckForUpdates
   }
 
   /// A menu bar app outlives its window; the widget relies on it staying up.
@@ -87,6 +92,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // The SwiftUI `Window` scene keeps its NSWindow after close; ordering it
     // front reopens it without a second scene instance.
     NSApp.windows.first { $0.identifier?.rawValue == "main" }?.makeKeyAndOrderFront(nil)
+  }
+}
+
+// MARK: - Update Alerts
+
+/// Roadie runs in the menu bar, so a window it opens lands behind the active
+/// app — and since macOS 14 an app may activate itself only while the user is
+/// interacting with it, which a scheduled check never is. The alert Sparkle is
+/// about to open is ordered in front of every app instead, which needs no
+/// activation, so an update is seen whether it was asked for or found by itself.
+final class UpdatePresenter: NSObject, SPUStandardUserDriverDelegate {
+  var supportsGentleScheduledUpdateReminders: Bool { true }
+
+  func standardUserDriverWillHandleShowingUpdate(
+    _ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state: SPUUserUpdateState
+  ) {
+    guard handleShowingUpdate else { return }
+    NSApp.activate()
+    // Sparkle opens its window after this call returns.
+    DispatchQueue.main.async {
+      for window in NSApp.windows where window.isVisible && window.identifier?.rawValue != "main" {
+        window.orderFrontRegardless()
+      }
+    }
   }
 }
 
