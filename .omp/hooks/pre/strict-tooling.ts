@@ -45,7 +45,7 @@ export default function strictTooling(pi: ExtensionAPI): void {
       if (dup) {
         return {
           block: true,
-          reason: `\`${p0}\` — 경로에 \`${dup[2]}\` 가 두 번 들어갔다. 프로젝트 루트(MarshallBluetooth/) 기준 경로로 다시 쓰세요.`,
+          reason: `\`${p0}\` — 경로에 \`${dup[2]}\` 가 두 번 들어갔다. 저장소 루트 기준 경로로 다시 쓰세요.`,
         };
       }
     }

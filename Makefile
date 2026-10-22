@@ -127,8 +127,7 @@ clean: ## Remove build output and caches
 	rm -rf $(MACOS)/build $(MACOS)/CoreTests/.build $(APP)/coverage
 	cd $(APP) && npx jest --clearCache >/dev/null
 
-# Publishing is scoped to this project's directory: the repository root holds
-# other work, and `git add -A` there would sweep it into this commit.
+# Publishing stages the tree `verify` read: the `-- .` pathspec, from the repository root.
 commit: verify ## Commit this project's verified changes (usage: make commit m="type(scope): subject")
 	@test -n '$(m)' || { echo 'usage: make commit m="type(scope): subject"' >&2; exit 2; }
 	@git add -A -- .

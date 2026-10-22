@@ -9,8 +9,7 @@ regenerated with `make demo` and `make widget-snapshots`, never edited by hand.
 Never commit or push unless the user explicitly asks in the current turn. This
 one is mechanical, not advisory: `strict-publish-consent.ts` reads the session's
 own entries and blocks the command. Publish with `make commit m="…"` and
-`make push`, which run `make verify` first and stage only this project's
-directory — the Git repository root holds other projects.
+`make push`, which run `make verify` first and stage the tree it read.
 
 ## Harness Integrity
 

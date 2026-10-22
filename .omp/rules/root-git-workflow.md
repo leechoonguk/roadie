@@ -30,17 +30,16 @@ What it cannot decide is whether the *word* was meant as an instruction: "커밋
 메시지 초안 써줘" grants consent under this rule. The gate is a permission check,
 not a promise that every match was an order.
 
-## One Repository, Several Projects
+## The Repository Is the Project
 
-The Git repository root is the parent directory (`rea-standard/`), and it holds
-other projects beside this one. Everything that publishes is therefore scoped to
-`MarshallBluetooth/`:
+The project directory is the Git repository root: `Makefile`, `app/`, `.omp/`,
+`docs/` and the CI in `.github/workflows/` sit side by side. Everything that
+publishes runs from there with the `-- .` pathspec:
 
-- `make commit` stages and commits with the `-- .` pathspec, so another
-  project's work is never swept into this commit.
+- `make commit` stages and commits `-- .` — the whole tree the gate read,
+  workflows included.
 - `strict-verified-git.ts` asks `git status --porcelain -- .` whether the commit
-  is the verified tree — unrelated changes elsewhere in the repository neither
-  block nor pass this project's commit.
+  is the verified tree.
 
 ## Verified Commit and Push
 
@@ -78,8 +77,8 @@ other projects beside this one. Everything that publishes is therefore scoped to
 
 - Commit or push unverified changes.
 - Include unrelated staged work without explicit user approval.
-- Commit from the repository root with `git add -A` — it sweeps the other
-  projects into this commit.
+- Stage by hand around `make commit` — `git add` of a chosen subset publishes a
+  tree the gate never read.
 - Commit a partial index after verifying the whole worktree — verify the tree you
   are publishing, not a different one.
 - Bypass a failed verification gate.

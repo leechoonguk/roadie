@@ -9,12 +9,11 @@ alwaysApply: false
 
 ## Overview
 
-`MarshallBluetooth/Makefile` is the only way commands run in this project. It
+`Makefile` at the repository root is the only way commands run in this project. It
 owns the npm and CocoaPods installs, Metro, the Xcode build, the five app gates
 (`lint`, `typecheck`, `test`, `swift-check`, `swift-test`), one `check-*` target per harness
-post hook, and the publish path. Run it from the project directory
-(`MarshallBluetooth/`); the Git repository root is the parent directory and
-holds other projects.
+post hook, and the publish path. Run it from the repository root, which is the
+project directory.
 
 `strict-command-routing` blocks the direct tool invocations these targets own
 (`npx tsc`, `npx eslint`, `npx jest`, `swiftc -typecheck`, `pod install`,

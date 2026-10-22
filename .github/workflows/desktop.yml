@@ -1,7 +1,7 @@
-# Roadie for Windows and Linux (MarshallBluetooth/app/desktop).
+# Roadie for Windows and Linux (app/desktop).
 #
 # The macOS app is built, signed and released on the maintainer's Mac with
-# `make release` (MarshallBluetooth/.omp/rules/release.md) — never here. This
+# `make release` (.omp/rules/release.md) — never here. This
 # workflow builds the two desktop installers on every change, and when that
 # release is published it attaches the Windows and Linux installers to it,
 # with the `latest.yml` / `latest-linux.yml` feeds installed copies update from
@@ -16,11 +16,13 @@ on:
     # Branches only: the version tag `make release` pushes is built on `release` instead.
     branches: ['**']
     paths:
-      - 'MarshallBluetooth/app/**'
+      - 'app/**'
+      - 'Makefile'
       - '.github/workflows/desktop.yml'
   pull_request:
     paths:
-      - 'MarshallBluetooth/app/**'
+      - 'app/**'
+      - 'Makefile'
       - '.github/workflows/desktop.yml'
   workflow_dispatch:
 
@@ -46,13 +48,12 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: |
-            MarshallBluetooth/app/package-lock.json
-            MarshallBluetooth/app/desktop/package-lock.json
+            app/package-lock.json
+            app/desktop/package-lock.json
       - name: Install
-        working-directory: MarshallBluetooth/app
+        working-directory: app
         run: npm ci && npm ci --prefix desktop
       - name: Lint, typecheck, test
-        working-directory: MarshallBluetooth
         run: make lint typecheck test desktop-typecheck
 
   build:
@@ -78,14 +79,14 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: MarshallBluetooth/app/desktop
+        working-directory: app/desktop
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: MarshallBluetooth/app/desktop/package-lock.json
+          cache-dependency-path: app/desktop/package-lock.json
       - name: Install
         run: npm ci
       - name: Version
@@ -105,11 +106,11 @@ jobs:
         with:
           name: Roadie-${{ env.VERSION }}-${{ matrix.name }}
           path: |
-            MarshallBluetooth/app/desktop/release/*.exe
-            MarshallBluetooth/app/desktop/release/*.exe.blockmap
-            MarshallBluetooth/app/desktop/release/*.AppImage
-            MarshallBluetooth/app/desktop/release/*.deb
-            MarshallBluetooth/app/desktop/release/latest*.yml
+            app/desktop/release/*.exe
+            app/desktop/release/*.exe.blockmap
+            app/desktop/release/*.AppImage
+            app/desktop/release/*.deb
+            app/desktop/release/latest*.yml
           if-no-files-found: error
       - name: Attach to the release
         if: github.event_name == 'release'

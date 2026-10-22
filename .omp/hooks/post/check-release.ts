@@ -65,9 +65,9 @@ const APP_ENTITLEMENTS = "app/macos/MarshallBluetooth-macOS/MarshallBluetooth.en
 const PODFILE = "app/macos/Podfile";
 const MACH_LOOKUP = "com.apple.security.temporary-exception.mach-lookup.global-name";
 const INSTALLER_SERVICES = ["$(PRODUCT_BUNDLE_IDENTIFIER)-spks", "$(PRODUCT_BUNDLE_IDENTIFIER)-spki"];
-/** The workflows `release.md` names as attaching installers; relative to the repository root, the project's parent. */
+/** The workflows `release.md` names as attaching installers. */
 const WORKFLOWS = ["desktop.yml", "native.yml"];
-const WORKFLOW_DIR = "../.github/workflows";
+const WORKFLOW_DIR = ".github/workflows";
 const DESKTOP_PACKAGE = "app/desktop/package.json";
 const SHARED_UPDATES = "app/src/updates.ts";
 /** The feeds electron-updater reads, per platform; `desktop.yml` must upload both. */

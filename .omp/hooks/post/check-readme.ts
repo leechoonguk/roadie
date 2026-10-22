@@ -53,7 +53,7 @@ const SOURCE_DIRS = ["app/src", "app/desktop/src", "app/mobile/src"];
 const SOURCE_FILES = ["app/App.tsx", "app/index.js", "app/metro.config.js"];
 const SCRIPT_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"];
 /** Where a build is configured: none may switch the demo speaker on. */
-const BUILD_CONFIG = ["Makefile", "../.github/workflows"];
+const BUILD_CONFIG = ["Makefile", ".github/workflows"];
 
 const MARKDOWN_LINK = /!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 const HTML_SOURCE = /\b(?:src|srcset|href)="([^"]+)"/g;
