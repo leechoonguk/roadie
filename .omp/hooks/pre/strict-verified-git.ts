@@ -23,9 +23,8 @@ const GIT_COMMIT = /(?:^|[&|;()]\s*)(?:sudo\s+)?git(?:\s+-\S+(?:\s+\S+)?)*\s+com
  * hook imported it, so committing only the hooks would have published a tree
  * that cannot even type-check, with a green verify behind it.
  *
- * The Git repository root is the parent directory, which holds other projects.
- * The worktree question is therefore asked of this project's directory only
- * (`git status --porcelain -- .`), the same scope `make commit` stages.
+ * The worktree question is asked with the same pathspec `make commit` stages
+ * (`git status --porcelain -- .`, from the repository root).
  */
 export default function strictVerifiedGit(pi: ExtensionAPI): void {
   // ctx-ok: 커밋 검증은 작업 트리 경로(ctx.cwd)가 필요하다 — event 에 없고, 단순 문자열 읽기라 던질 수 없다.

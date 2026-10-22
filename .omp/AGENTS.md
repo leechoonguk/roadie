@@ -1,4 +1,4 @@
-# MarshallBluetooth — Project Guide
+# Roadie — Project Guide
 
 ## Overview
 
@@ -61,7 +61,7 @@ app/                          React Native + react-native-macos, TypeScript, npm
     MarshallWidget/*.swift, Info.plist, *.entitlements   WidgetKit extension and its App Intents
     CoreTests/                                     SwiftPM: Swift tests, BLE probe, icon renderer, widget snapshots (docs/)
 .omp/                         rules/ hooks/ extensions/ skills/ (this harness)
-../.github/workflows/         CI at the repository root: desktop.yml, native.yml (rule://release)
+.github/workflows/            CI: desktop.yml, native.yml (rule://release)
 ```
 
 The boundary between those layers — what may import React, where CoreBluetooth
@@ -69,8 +69,8 @@ lives, what a bridge file may hold — is rule://app-native-boundary.
 
 ## Commands
 
-Everything runs through the `Makefile` from this directory (`MarshallBluetooth/`);
-the Git repository root is the parent directory and holds other projects.
+Everything runs through the `Makefile` at the repository root, which is the
+project directory.
 
 | Need | Command |
 |---|---|

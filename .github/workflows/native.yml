@@ -1,4 +1,4 @@
-# Roadie on Android, iOS and macOS (MarshallBluetooth/app).
+# Roadie on Android, iOS and macOS (app).
 #
 # - Android: a Release APK signed with the React Native template's public
 #   debug key — installable by hand, not a store build. When `make release`
@@ -7,7 +7,7 @@
 #   needs the maintainer's Apple signing in Xcode, so no iOS build is attached.
 # - macOS: the whole `make verify` gate, the README's widget pictures and an
 #   unsigned build, as a compile gate only. The Mac app is built, signed and
-#   released on the maintainer's Mac (MarshallBluetooth/.omp/rules/release.md)
+#   released on the maintainer's Mac (.omp/rules/release.md)
 #   — never from here.
 name: Native (Android, iOS, macOS)
 
@@ -18,11 +18,17 @@ on:
     # Branches only: the version tag `make release` pushes is built on `release` instead.
     branches: ['**']
     paths:
-      - 'MarshallBluetooth/app/**'
+      - 'app/**'
+      # The macOS job runs the whole gate, so a harness or Makefile change runs it too.
+      - '.omp/**'
+      - 'Makefile'
       - '.github/workflows/native.yml'
   pull_request:
     paths:
-      - 'MarshallBluetooth/app/**'
+      - 'app/**'
+      # The macOS job runs the whole gate, so a harness or Makefile change runs it too.
+      - '.omp/**'
+      - 'Makefile'
       - '.github/workflows/native.yml'
   workflow_dispatch:
 
@@ -49,14 +55,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: MarshallBluetooth/app/package-lock.json
+          cache-dependency-path: app/package-lock.json
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
           cache: gradle
       - name: Install
-        working-directory: MarshallBluetooth/app
+        working-directory: app
         run: npm ci
       - name: Version
         # The git tag is the version (release.md); other builds are numbered by run.
@@ -68,18 +74,16 @@ jobs:
           fi
           echo "VERSION=$version" >> "$GITHUB_ENV"
       - name: Build
-        working-directory: MarshallBluetooth
         run: |
           make android-apk v="$VERSION"
           cp app/android/app/build/outputs/apk/release/app-release.apk "Roadie-$VERSION-android.apk"
       - uses: actions/upload-artifact@v4
         with:
           name: Roadie-${{ env.VERSION }}-Android
-          path: MarshallBluetooth/Roadie-*-android.apk
+          path: Roadie-*-android.apk
           if-no-files-found: error
       - name: Attach to the release
         if: github.event_name == 'release'
-        working-directory: MarshallBluetooth
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$GITHUB_REF_NAME" Roadie-*-android.apk --repo "$GITHUB_REPOSITORY" --clobber
@@ -94,12 +98,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: MarshallBluetooth/app/package-lock.json
+          cache-dependency-path: app/package-lock.json
       - name: Install
-        working-directory: MarshallBluetooth/app
+        working-directory: app
         run: npm ci
       - name: Build
-        working-directory: MarshallBluetooth
         run: make ios-pods ios-build
 
   macos:
@@ -112,27 +115,24 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: MarshallBluetooth/app/package-lock.json
+          cache-dependency-path: app/package-lock.json
       - name: Install
-        working-directory: MarshallBluetooth/app
+        working-directory: app
         run: npm ci
       # The project's whole gate — JS, Swift and every harness check — needs a
       # Mac for swift-check and swift-test, so this is the one place it runs in full.
       - name: make verify
-        working-directory: MarshallBluetooth
         run: make verify
       # The README's widget pictures need SwiftUI on a Mac: rendered here so a
       # change to the widget can be checked against them (rule://root-readme).
       - name: Widget pictures
-        working-directory: MarshallBluetooth
         run: make widget-snapshots
       - uses: actions/upload-artifact@v4
         with:
           name: widget-snapshots
-          path: MarshallBluetooth/docs/widgets-*.png
+          path: docs/widgets-*.png
           if-no-files-found: error
       - name: Build
-        working-directory: MarshallBluetooth
         run: |
           make pods
           xcodebuild -workspace app/macos/MarshallBluetooth.xcworkspace -scheme MarshallBluetooth-macOS \

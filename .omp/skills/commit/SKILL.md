@@ -20,9 +20,8 @@ session-wide blockers rather than this skill's own checks).
 
 ## Workflow
 
-1. Inspect this project's worktree (`git status -- .` from `MarshallBluetooth/`)
-   and separate unrelated user changes before staging. The repository root is
-   the parent directory and holds other projects; never stage from there.
+1. Inspect the worktree (`git status -- .` from the repository root) and
+   separate unrelated user changes before staging.
 2. Publish through the Make targets — `verify` is a prerequisite of both, so the
    tree that is published is the tree the gate read:
 
@@ -65,6 +64,6 @@ terminal is their own action and is not gated.
 
 - Commit or push without a request in the current user turn.
 - Commit or push unrelated staged work without explicit user approval.
-- Stage from the repository root — it sweeps the other projects in.
+- Stage a hand-picked subset around `make commit` — it publishes a tree the gate never read.
 - Treat a tool-wrapper status as more authoritative than a captured Make status.
 - Bypass a failed gate by committing or pushing anyway.
