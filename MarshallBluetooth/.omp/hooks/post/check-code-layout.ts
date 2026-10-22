@@ -160,8 +160,7 @@ export function checkCodeLayoutSync(): string[] {
 
 /**
  * Every text asset the project owns. Directories that belong to a tool
- * (`node_modules`, `Pods`, build output) are excluded, and so is the prior
- * reverse-engineering report (`README.md`), which is kept verbatim.
+ * (`node_modules`, `Pods`, build output) are excluded.
  */
 function hygieneFiles(): string[] {
   const roots = [
@@ -176,11 +175,13 @@ function hygieneFiles(): string[] {
   ];
   const singles = [
     join(projectRoot, "Makefile"),
+    join(projectRoot, "README.md"),
     join(projectRoot, "app", "App.tsx"),
     join(projectRoot, "app", "index.js"),
     join(projectRoot, "app", "metro.config.js"),
     join(projectRoot, "app", "react-native.config.js"),
     join(projectRoot, "app", "desktop", "build.ts"),
+    join(projectRoot, "app", "desktop", "demo.ts"),
     join(projectRoot, "app", "macos", "Podfile"),
     join(projectRoot, ".omp", "AGENTS.md"),
     join(projectRoot, ".omp", "RULES.md"),

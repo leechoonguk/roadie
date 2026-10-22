@@ -46,8 +46,13 @@ struct MarshallProvider: TimelineProvider {
 /// `vibrant` or `accented` whenever its space is not focused — so values use
 /// hierarchical styles and `widgetAccentable` instead of fixed tints.
 struct MarshallWidgetView: View {
-  @Environment(\.widgetFamily) private var family
+  @Environment(\.widgetFamily) private var hostFamily
   let entry: MarshallEntry
+  /// The size to draw when no widget host supplies one — `make widget-snapshots`
+  /// renders the view on its own, and the host's family is read-only.
+  var family: WidgetFamily?
+
+  private var drawnFamily: WidgetFamily { family ?? hostFamily }
 
   private var snapshot: DeviceSnapshot { entry.snapshot }
   /// The sample is read-only. On macOS a press goes through the menu bar app's
@@ -67,7 +72,7 @@ struct MarshallWidgetView: View {
 
   var body: some View {
     Group {
-      switch family {
+      switch drawnFamily {
       case .systemLarge:
         VStack(alignment: .leading, spacing: 16) {
           header
@@ -271,7 +276,7 @@ struct MarshallWidgetView: View {
     if let level = snapshot.volume, let maximum = snapshot.maxVolume {
       parts.append("volume \(level) of \(maximum)")
     }
-    if family != .systemSmall, let bass = snapshot.bass, let treble = snapshot.treble {
+    if drawnFamily != .systemSmall, let bass = snapshot.bass, let treble = snapshot.treble {
       parts.append("bass \(Self.offsetFromFlat(bass)), treble \(Self.offsetFromFlat(treble))")
     }
     return parts.joined(separator: ", ")
@@ -293,12 +298,5 @@ struct MarshallStatusWidget: Widget {
     .configurationDisplayName("Roadie")
     .description("Volume and EQ of your Marshall speaker, adjustable from the widget.")
     .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
-  }
-}
-
-@main
-struct MarshallWidgetBundle: WidgetBundle {
-  var body: some Widget {
-    MarshallStatusWidget()
   }
 }

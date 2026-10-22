@@ -3,8 +3,9 @@
 ## Session Safety
 
 Never modify `AGENTS.md` or any `.omp/` file without explicit user request.
-Never modify `README.md` at the project root — it is the prior
-reverse-engineering report and is kept verbatim.
+`README.md` at the project root is the project's front page: keep it true to
+the code in the same change (rule://root-readme). Its pictures in `docs/` are
+regenerated with `make demo` and `make widget-snapshots`, never edited by hand.
 Never commit or push unless the user explicitly asks in the current turn. This
 one is mechanical, not advisory: `strict-publish-consent.ts` reads the session's
 own entries and blocks the command. Publish with `make commit m="…"` and

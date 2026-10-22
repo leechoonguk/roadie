@@ -29,6 +29,7 @@ export function ruleForHook(hookName: string): string | null {
 const RULE_NAME_EXCEPTIONS: Record<string, string> = {
   "omp-rules": "omp-conventions",
   "makefiles": "root-makefile",
+  "readme": "root-readme",
 };
 
 function ruleDescription(rule: string): string | null {

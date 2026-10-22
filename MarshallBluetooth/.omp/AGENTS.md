@@ -14,8 +14,8 @@ platforms from one set of React Native screens (TypeScript, npm):
 
 One Bluetooth core per language: Swift for Apple platforms, TypeScript for the
 rest, held to each other by rule://app-protocol-parity; the layers and swaps
-are rule://app-native-boundary. The prior reverse-engineering report of the
-official Marshall app is `README.md` at the project root (kept verbatim).
+are rule://app-native-boundary. `README.md` at the project root is the
+front page; its pictures in `docs/` are made from the app (rule://root-readme).
 
 The `make verify` gate runs without Xcode; `make build`, `make relaunch`,
 `make run` and `make pods` need it (rule://app-macos-project, "Running on This
@@ -26,7 +26,8 @@ tests it.
 
 ```
 Makefile                      the only entry point (rule://root-makefile)
-README.md                     prior reverse-engineering report (do not edit)
+README.md                     the front page, kept true to the code (rule://root-readme)
+docs/                         the README's pictures: demo.gif (`make demo`), widgets-*.png (`make widget-snapshots`)
 app/                          React Native + react-native-macos, TypeScript, npm
   App.tsx, index.js           entry points (index.js also registers background tasks)
   metro.config.js             Android swaps of src/native/* → mobile/src/
@@ -41,6 +42,8 @@ app/                          React Native + react-native-macos, TypeScript, npm
   __tests__/                  jest tests (shared modules, each platform's transport, the Android widget)
   desktop/                    Windows/Linux: Electron package (own package.json; rule://tooling)
     build.ts                  esbuild bundle: react-native → react-native-web, src/native/* swapped
+    demo.ts                   `make demo`: records docs/demo.gif from a ROADIE_DEMO bundle (rule://root-readme)
+    src/demo/                 the in-memory ACTON III that recording talks to; never in an installer
     src/main.ts               main process and the tray menu (the widget's counterpart)
     src/renderer/             Web Bluetooth transport, tray bridge, react-native shim
   mobile/src/                 Android only: ble-plx transport, the home screen widget
@@ -56,7 +59,7 @@ app/                          React Native + react-native-macos, TypeScript, npm
     MarshallBluetooth-macOS/Native/Core/*.swift    React-free core: BLE, status item, widget request relay, one-shot press (iOS)
     MarshallBluetooth-macOS/Native/*.swift, *.m    RN native module adapters (Swift + ObjC RCT_EXTERN)
     MarshallWidget/*.swift, Info.plist, *.entitlements   WidgetKit extension and its App Intents
-    CoreTests/                                     SwiftPM: Swift tests, BLE probe, icon renderer
+    CoreTests/                                     SwiftPM: Swift tests, BLE probe, icon renderer, widget snapshots (docs/)
 .omp/                         rules/ hooks/ extensions/ skills/ (this harness)
 ../.github/workflows/         CI at the repository root: desktop.yml, native.yml (rule://release)
 ```
@@ -76,6 +79,7 @@ the Git repository root is the parent directory and holds other projects.
 | Run the app as built (Xcode) | `make start` once, then `make relaunch`; `make app-logs` to follow widget → app |
 | Windows/Linux app | `make desktop-start`; installers with `make desktop-dist v=x.y.z` (this OS only — CI builds both) |
 | Android APK, iOS build | `make android-apk v=x.y.z` (Android SDK, JDK 17); `make ios-build` (Xcode, simulator) |
+| The README's pictures | `make demo` (desktop recording), `make widget-snapshots` (macOS; CI renders them too) |
 | Talk to the speaker without the app | `make ble-probe ARGS="--target ACTON --raw"` |
 | Release (only when asked) | `make release bump=patch\|minor\|major` (`DRY_RUN=1` first); `make app-install` puts the published Mac build in /Applications |
 | One harness check | `make check-<name>` (listed by `make help`) |

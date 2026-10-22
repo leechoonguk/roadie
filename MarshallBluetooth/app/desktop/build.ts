@@ -5,6 +5,8 @@
  * wrappers swapped for their `src/renderer/` counterparts.
  *
  * Run with `make desktop-build`; node strips the types, so no compile step.
+ * `ROADIE_DEMO=1` bundles the in-memory speaker (`src/demo/`) in place of Web
+ * Bluetooth, for `make demo` — the only build that ever contains it.
  */
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -18,6 +20,8 @@ const modules = join(here, 'node_modules');
 const icons = join(here, '..', 'macos', 'MarshallBluetooth-macOS', 'Assets.xcassets', 'AppIcon.appiconset');
 const shared = join(here, '..', 'src');
 const production = process.env.NODE_ENV !== 'development';
+const demo = process.env.ROADIE_DEMO === '1';
+const renderer = join(here, 'src', 'renderer');
 
 /** Imports from the shared code (`app/src`) that resolve to a desktop file instead. */
 const SWAPS: Array<[RegExp, string]> = [
@@ -25,6 +29,9 @@ const SWAPS: Array<[RegExp, string]> = [
   [/\/native\/widgetBridge$/, join(here, 'src', 'renderer', 'widgetBridge.ts')],
   [/\/native\/appUpdates$/, join(here, 'src', 'renderer', 'appUpdates.ts')],
 ];
+/** Web Bluetooth, and what `ROADIE_DEMO=1` bundles in its place: the in-memory speaker `make demo` records. */
+const WEB_BLUETOOTH = join(renderer, 'marshallBle.ts');
+const DEMO_BLUETOOTH = join(here, 'src', 'demo', 'marshallBle.ts');
 
 /**
  * One React for the whole bundle: the shared screens sit under `app/`, whose
@@ -35,7 +42,7 @@ const desktopResolution: esbuild.Plugin = {
   name: 'desktop-resolution',
   setup(build) {
     // The shim re-exports react-native-web; its own import of it resolves normally.
-    build.onResolve({ filter: /^react-native$/ }, () => ({ path: join(here, 'src', 'renderer', 'reactNative.ts') }));
+    build.onResolve({ filter: /^react-native$/ }, () => ({ path: join(renderer, 'reactNative.ts') }));
     build.onResolve({ filter: /^react-native-web$/ }, () => ({
       path: join(modules, 'react-native-web', 'dist', 'index.js'),
     }));
@@ -46,8 +53,12 @@ const desktopResolution: esbuild.Plugin = {
       return build.resolve(args.path, { kind: args.kind, resolveDir: here, pluginData: 'desktop' });
     });
     for (const [filter, path] of SWAPS) {
-      build.onResolve({ filter }, args => (args.importer.startsWith(shared) ? { path } : undefined));
+      build.onResolve({ filter }, args => (args.importer.startsWith(shared) ? { path: bundled(path) } : undefined));
     }
+    // The window's own import of Web Bluetooth, which the tray's presses go through.
+    build.onResolve({ filter: /^\.\/marshallBle$/ }, args =>
+      demo && args.importer.startsWith(renderer) ? { path: DEMO_BLUETOOTH } : undefined,
+    );
   },
 };
 
@@ -73,7 +84,7 @@ await Promise.all([
     minify: production,
   }),
   esbuild.build({
-    entryPoints: [join(here, 'src', 'renderer', 'index.tsx')],
+    entryPoints: [join(renderer, 'index.tsx')],
     outfile: join(out, 'renderer.js'),
     bundle: true,
     platform: 'browser',
@@ -90,7 +101,11 @@ await Promise.all([
   }),
 ]);
 
-copyFileSync(join(here, 'src', 'renderer', 'index.html'), join(out, 'index.html'));
+copyFileSync(join(renderer, 'index.html'), join(out, 'index.html'));
 copyFileSync(join(icons, 'icon_512@2x.png'), join(out, 'icon.png'));
 copyFileSync(join(icons, 'icon_32.png'), join(out, 'tray.png'));
-console.log(`desktop bundle written to ${out}`);
+console.log(`desktop bundle written to ${out}${demo ? ' (demo speaker)' : ''}`);
+
+function bundled(path: string): string {
+  return demo && path === WEB_BLUETOOTH ? DEMO_BLUETOOTH : path;
+}

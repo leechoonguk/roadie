@@ -39,10 +39,7 @@ harness's own hooks and extensions. Machine-checked by `check-code-layout.ts`
 | `.omp/hooks/**`, `.omp/extensions/**` | yes + JSDoc header | yes | yes | yes |
 | `app/macos/Shared/`, `MarshallBluetooth-macOS/`, `MarshallWidget/` (`.swift`, `.m`, `.h`) | yes | — (Swift's own conventions; `swift-check` reads it) | — | yes |
 | The mobile shells: `app/ios/MarshallBluetooth/` (`.swift`), `app/android/app/src/main/java/` (`.kt`) | yes | — (the React Native template's own layout) | — | yes |
-| `.omp/rules`, `.omp/skills`, `AGENTS.md`, `RULES.md`, `Makefile`, `Podfile` | — | — | — | yes |
-
-The prior reverse-engineering report (`README.md`) is kept verbatim and is not
-held to the whitespace standard.
+| `.omp/rules`, `.omp/skills`, `AGENTS.md`, `RULES.md`, `README.md`, `Makefile`, `Podfile` | — | — | — | yes |
 
 ## Comments (every language)
 
