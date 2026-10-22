@@ -28,6 +28,16 @@ that answers with the bytes a real one sends. `make demo` records it.</sub>
 - **Updates itself** from this repository's releases, and asks before
   installing.
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/widgets-dark.png">
+    <img src="docs/widgets-light.png" width="812" alt="The Roadie widget in its three sizes: volume with minus and plus in the small one, volume beside bass and treble in the medium one, every control and a Flat reset in the large one">
+  </picture>
+</p>
+
+<sub>The widget in its three sizes, drawn by the widget's own views.
+`make widget-snapshots` renders it.</sub>
+
 Measured on an ACTON III (firmware 8.2.2). Other Marshall models that
 advertise the same control service should work, but have not been tried.
 
@@ -107,12 +117,14 @@ screen, regenerate its picture and commit it with the change.
 | Picture | Command | Needs |
 |---|---|---|
 | `docs/demo.gif` | `make demo` | `make desktop-install` and ffmpeg; on Linux without a display, xvfb-run |
+| `docs/widgets-light.png`, `docs/widgets-dark.png` | `make widget-snapshots` | macOS |
 
 `make demo` builds the desktop app with the demo speaker in place of
 Bluetooth, presses its buttons through the Chrome DevTools Protocol, records
 the window and turns the frames into a GIF. The demo speaker is bundled only
 for that recording; no installer carries it.
 
-`make widget-snapshots` (macOS) renders the widget's own views, light and dark,
-into `docs/`. CI renders them on every change to the app and uploads them as
-the `widget-snapshots` artifact of the *Native* workflow.
+`make widget-snapshots` renders the widget's own views, light and dark, with
+SwiftUI's `ImageRenderer`. CI renders them on every change to the app and
+uploads them as the `widget-snapshots` artifact of the *Native* workflow, so a
+machine without a Mac can take them from there.
