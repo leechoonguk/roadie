@@ -29,6 +29,7 @@
 		B00A0ADA174AACB0CF2B9D72 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 234237712E4DA390D02FB3CD /* Cocoa.framework */; };
 		B2C3D4E5F60718293A4B5C6D /* ControlRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E1D2C3B4A5968778695A4B /* ControlRequest.swift */; };
 		BCD8B4BAE4364490844909F8 /* MarshallWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020BC345AF137B42A5B25 /* MarshallWidget.swift */; };
+		F6852D03B2B55A37150C4F6C /* MarshallWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D20320A996CA9C2B0BB751F /* MarshallWidgetBundle.swift */; };
 		C3D4E5F60718293A4B5C6D7E /* ControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F2A3B4C5D6E7F8091A2B3C /* ControlIntents.swift */; };
 		D4E5F60718293A4B5C6D7E8F /* ControlRequestRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E3F4A5B6C7D8E9F0A1B2C3 /* ControlRequestRelay.swift */; };
 		D8AE45576FF34B8F6CC4C87C /* MarshallBleModule.m in Sources */ = {isa = PBXBuildFile; fileRef = DFA8C8C4218045FD6DD9B62C /* MarshallBleModule.m */; };
@@ -86,6 +87,7 @@
 		A5A6400A85563AF77FB300A1 /* MarshallScanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarshallScanner.swift; sourceTree = "<group>"; };
 		BD938B004FA489DC1A543FE9 /* WidgetBridgeModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetBridgeModule.swift; sourceTree = "<group>"; };
 		C82020BC345AF137B42A5B25 /* MarshallWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarshallWidget.swift; sourceTree = "<group>"; };
+		1D20320A996CA9C2B0BB751F /* MarshallWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarshallWidgetBundle.swift; sourceTree = "<group>"; };
 		D2E3F4A5B6C7D8E9F0A1B2C3 /* ControlRequestRelay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlRequestRelay.swift; sourceTree = "<group>"; };
 		DFA8C8C4218045FD6DD9B62C /* MarshallBleModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MarshallBleModule.m; sourceTree = "<group>"; };
 		E1F2A3B4C5D6E7F8091A2B3C /* ControlIntents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ControlIntents.swift; sourceTree = "<group>"; };
@@ -217,6 +219,7 @@
 			isa = PBXGroup;
 			children = (
 				C82020BC345AF137B42A5B25 /* MarshallWidget.swift */,
+				1D20320A996CA9C2B0BB751F /* MarshallWidgetBundle.swift */,
 				E1F2A3B4C5D6E7F8091A2B3C /* ControlIntents.swift */,
 				96AD926971B33897305AAC85 /* Info.plist */,
 				E8F3AE111957C4E0472D0C22 /* MarshallWidget.entitlements */,
@@ -456,6 +459,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BCD8B4BAE4364490844909F8 /* MarshallWidget.swift in Sources */,
+				F6852D03B2B55A37150C4F6C /* MarshallWidgetBundle.swift in Sources */,
 				7302BAB41325B3097FA9AB05 /* DeviceSnapshot.swift in Sources */,
 				6CB7E8AF33D560FD33108E9C /* ControlStep.swift in Sources */,
 				B2C3D4E5F60718293A4B5C6D /* ControlRequest.swift in Sources */,

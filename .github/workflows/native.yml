@@ -5,9 +5,10 @@
 #   publishes a release, the APK is attached to it.
 # - iOS: an unsigned simulator build, as a compile gate. Installing on a phone
 #   needs the maintainer's Apple signing in Xcode, so no iOS build is attached.
-# - macOS: the whole `make verify` gate and an unsigned build, as a compile gate only. The
-#   Mac app is built, signed and released on the maintainer's Mac
-#   (MarshallBluetooth/.omp/rules/release.md) — never from here.
+# - macOS: the whole `make verify` gate, the README's widget pictures and an
+#   unsigned build, as a compile gate only. The Mac app is built, signed and
+#   released on the maintainer's Mac (MarshallBluetooth/.omp/rules/release.md)
+#   — never from here.
 name: Native (Android, iOS, macOS)
 
 on:
@@ -120,6 +121,16 @@ jobs:
       - name: make verify
         working-directory: MarshallBluetooth
         run: make verify
+      # The README's widget pictures need SwiftUI on a Mac: rendered here so a
+      # change to the widget can be checked against them (rule://root-readme).
+      - name: Widget pictures
+        working-directory: MarshallBluetooth
+        run: make widget-snapshots
+      - uses: actions/upload-artifact@v4
+        with:
+          name: widget-snapshots
+          path: MarshallBluetooth/docs/widgets-*.png
+          if-no-files-found: error
       - name: Build
         working-directory: MarshallBluetooth
         run: |

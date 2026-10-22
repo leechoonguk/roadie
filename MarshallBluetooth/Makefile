@@ -1,8 +1,8 @@
-.PHONY: help install pods start run build relaunch app-logs typecheck lint test swift-check swift-test ble-probe app-icon verify clean commit push \
+.PHONY: help install pods start run build relaunch app-logs typecheck lint test swift-check swift-test ble-probe app-icon demo widget-snapshots verify clean commit push \
 	desktop-install desktop-build desktop-start desktop-typecheck desktop-dist android-apk ios-pods ios-build \
 	dist release unrelease app-install \
 	check-app-duplicate-blocks check-app-ios-project check-app-macos-project check-app-native-boundary check-app-protocol-parity check-code-layout check-makefiles \
-	check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling check-verify
+	check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-readme check-release check-tooling check-verify
 
 APP := app
 MACOS := $(APP)/macos
@@ -85,6 +85,14 @@ ble-probe: ## Drive the BLE core against a real speaker from the terminal (ARGS=
 app-icon: ## Render the app icon into the asset catalog from its Swift drawing (CoreTests/Icon)
 	swift run --package-path $(MACOS)/CoreTests roadie-icon $(MACOS)/MarshallBluetooth-macOS/Assets.xcassets/AppIcon.appiconset
 
+# The README's pictures (rule://root-readme): recorded and rendered from the app
+# itself, so a changed screen is regenerated, never redrawn by hand.
+demo: ## Record docs/demo.gif — the desktop app driving an in-memory speaker (needs `make desktop-install` and ffmpeg; xvfb-run on Linux without a display)
+	node app/desktop/demo.ts
+
+widget-snapshots: ## Render docs/widgets-light.png and docs/widgets-dark.png from the widget's own views (requires macOS)
+	swift run --package-path $(MACOS)/CoreTests roadie-widget-snapshots docs
+
 # Windows and Linux (rule://root-makefile). Electron and electron-builder run on
 # any OS, but an installer is built for the OS it runs on — CI builds both.
 desktop-install: ## Install the Windows/Linux desktop app's dependencies (npm ci in app/desktop)
@@ -113,7 +121,7 @@ ios-pods: ## Install CocoaPods for the iOS app (requires Xcode)
 ios-build: ## Build the iOS app for the simulator, unsigned (requires Xcode and `make ios-pods`; a device build is signed in Xcode)
 	xcodebuild -workspace $(APP)/ios/MarshallBluetooth.xcworkspace -scheme MarshallBluetooth -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
 
-verify: lint typecheck test swift-check swift-test check-app-duplicate-blocks check-app-ios-project check-app-macos-project check-app-native-boundary check-app-protocol-parity check-code-layout check-makefiles check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-release check-tooling ## Run every gate that runs without Xcode
+verify: lint typecheck test swift-check swift-test check-app-duplicate-blocks check-app-ios-project check-app-macos-project check-app-native-boundary check-app-protocol-parity check-code-layout check-makefiles check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-readme check-release check-tooling ## Run every gate that runs without Xcode
 
 clean: ## Remove build output and caches
 	rm -rf $(MACOS)/build $(MACOS)/CoreTests/.build $(APP)/coverage
@@ -179,6 +187,9 @@ check-omp-skills: ## Check the skills catalog against the discovered SKILL.md fi
 
 check-omp-types: ## Type-check the harness TypeScript (.omp/**/*.ts)
 	node .omp/hooks/post/check-omp-types.ts
+
+check-readme: ## Check the README's links, make targets and docs/ pictures, and that the demo speaker reaches no shipped build
+	node .omp/hooks/post/check-readme.ts
 
 check-release: ## Check the update feed, Sparkle keys, sandbox entitlements and release asset names agree
 	node .omp/hooks/post/check-release.ts

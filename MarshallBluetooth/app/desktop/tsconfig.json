@@ -19,5 +19,5 @@
       "react-native-web": ["../node_modules/react-native"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "build.ts", "../__tests__/desktop.test.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "build.ts", "demo.ts", "../__tests__/desktop.test.ts"]
 }

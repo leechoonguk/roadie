@@ -29,6 +29,14 @@ let package = Package(
     ),
     // Draws the app icon into the asset catalog (`make app-icon`).
     .executableTarget(name: "roadie-icon", path: "Icon"),
+    // Renders the widget's own views into the README's pictures (`make
+    // widget-snapshots`). `Widget` links the extension's sources; its entry
+    // point and bundle files stay out, as this tool has an entry point of its own.
+    .executableTarget(
+      name: "roadie-widget-snapshots",
+      path: "WidgetSnapshots",
+      exclude: ["Widget/MarshallWidgetBundle.swift", "Widget/Info.plist", "Widget/MarshallWidget.entitlements"]
+    ),
   ],
   swiftLanguageModes: [.v5]
 )

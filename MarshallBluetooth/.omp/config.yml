@@ -38,6 +38,7 @@ disabledExtensions:
   - hook:post:check-omp-rules:check-omp-rules.ts
   - hook:post:check-omp-skills:check-omp-skills.ts
   - hook:post:check-omp-types:check-omp-types.ts
+  - hook:post:check-readme:check-readme.ts
   - hook:post:check-release:check-release.ts
   - hook:post:check-tooling:check-tooling.ts
   - hook:post:check-verify:check-verify.ts

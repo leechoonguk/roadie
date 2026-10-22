@@ -155,6 +155,12 @@ const denylist: Array<{
     target: "make desktop-build",
   },
   {
+    // The README's recording has one documented entry, like the bundler it drives.
+    desc: "README 데모 녹화 직접 실행",
+    pattern: new RegExp(`${atCmdStart("node")}\\s+\\S*desktop/demo\\.ts\\b`),
+    target: "make demo",
+  },
+  {
     desc: "electron-builder 직접 실행",
     pattern: new RegExp(`${atCmdStart("(?:npx\\s+)?electron-builder")}(?:\\s|$)`),
     target: "make desktop-dist",

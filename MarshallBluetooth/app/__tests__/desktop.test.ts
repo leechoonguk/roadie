@@ -1,6 +1,7 @@
 import { setTimeout as flush } from 'node:timers/promises';
 
 import type { ChooserDevice, RoadieBridge } from '../desktop/src/bridge';
+import { marshallBle as demoBle, turnKnob } from '../desktop/src/demo/marshallBle';
 import { marshallBle } from '../desktop/src/renderer/marshallBle';
 import { UUIDS } from '../src/protocol';
 
@@ -99,4 +100,27 @@ test('a desktop search lists candidates, connecting one answers the request, and
   expect(volume.written).toEqual([[20]]);
   expect(equalizer.written).toEqual([[7, 0xff, 0xff, 0xff, 6]]);
   expect(updates).toContainEqual({ identifier: 'speaker-1', isConnected: true, controlState: { volume: 20 } });
+});
+
+test('the demo speaker is found, answers as an ACTON III, stores writes and notifies a knob turn', async () => {
+  const discovered: string[] = [];
+  const updates: object[] = [];
+  demoBle.onDeviceDiscovered(device => discovered.push(device.identifier));
+  demoBle.onDeviceUpdated(update => updates.push(update));
+
+  demoBle.startScan();
+  await flush(1000);
+  expect(discovered).toEqual(['demo-acton-iii']);
+
+  demoBle.connect('demo-acton-iii');
+  await flush(500);
+  expect(updates).toContainEqual({ identifier: 'demo-acton-iii', isConnected: true, deviceInfo: { model: 'ACTON III' } });
+  expect(updates).toContainEqual({ identifier: 'demo-acton-iii', isConnected: true, controlState: { volume: 12 } });
+
+  demoBle.setVolume('demo-acton-iii', 13);
+  await flush(200);
+  expect(updates).toContainEqual({ identifier: 'demo-acton-iii', isConnected: true, controlState: { volume: 13 } });
+
+  turnKnob('volume', [20]);
+  expect(updates).toContainEqual({ identifier: 'demo-acton-iii', isConnected: true, controlState: { volume: 20 } });
 });

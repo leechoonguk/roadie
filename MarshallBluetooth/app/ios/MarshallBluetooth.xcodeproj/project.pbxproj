@@ -35,6 +35,7 @@
 		946330DF65D97D441CB5126F /* ControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16367D7B37CB18C4E7E9A649 /* ControlIntents.swift */; };
 		90EE6B2739570F053A04A4DC /* ControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16367D7B37CB18C4E7E9A649 /* ControlIntents.swift */; };
 		10173A7D2DE30D59325F1A27 /* MarshallWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A84D7BC4F7556156F8D50E1 /* MarshallWidget.swift */; };
+		229586FDA2DC868B16CA1CFE /* MarshallWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD32530AA9C56A1B41074D73 /* MarshallWidgetBundle.swift */; };
 		3A6CE0E9084E33EC76A89F6D /* RoadieWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6C4AFB15A76867BB1ECD3790 /* RoadieWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -90,6 +91,7 @@
 		6B2F0D1E2F3041425364758B /* AppUpdatesModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = AppUpdatesModule.m; path = MarshallBluetooth-macOS/Native/AppUpdatesModule.m; sourceTree = "<group>"; };
 		16367D7B37CB18C4E7E9A649 /* ControlIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ControlIntents.swift; path = MarshallWidget/ControlIntents.swift; sourceTree = "<group>"; };
 		9A84D7BC4F7556156F8D50E1 /* MarshallWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MarshallWidget.swift; path = MarshallWidget/MarshallWidget.swift; sourceTree = "<group>"; };
+		BD32530AA9C56A1B41074D73 /* MarshallWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MarshallWidgetBundle.swift; path = MarshallWidget/MarshallWidgetBundle.swift; sourceTree = "<group>"; };
 		6C4AFB15A76867BB1ECD3790 /* RoadieWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RoadieWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		8299DD58517E0DD559A67825 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B31F046EE0165C8990D67400 /* RoadieWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoadieWidget.entitlements; sourceTree = "<group>"; };
@@ -198,6 +200,7 @@
 				6B2F0D1E2F3041425364758B /* AppUpdatesModule.m */,
 				16367D7B37CB18C4E7E9A649 /* ControlIntents.swift */,
 				9A84D7BC4F7556156F8D50E1 /* MarshallWidget.swift */,
+				BD32530AA9C56A1B41074D73 /* MarshallWidgetBundle.swift */,
 			);
 			name = "Shared with macOS";
 			path = ../macos;
@@ -418,6 +421,7 @@
 				5115A4E54456F3ED3899F6E9 /* OneShotSession.swift in Sources */,
 				90EE6B2739570F053A04A4DC /* ControlIntents.swift in Sources */,
 				10173A7D2DE30D59325F1A27 /* MarshallWidget.swift in Sources */,
+				229586FDA2DC868B16CA1CFE /* MarshallWidgetBundle.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
