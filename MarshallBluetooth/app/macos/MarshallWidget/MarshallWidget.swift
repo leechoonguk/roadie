@@ -131,10 +131,16 @@ struct MarshallWidgetView: View {
           .fill(snapshot.isConnected ? Color.green : Color.secondary.opacity(0.4))
           .frame(width: 6, height: 6)
           .widgetAccentable()
-        Text(snapshot.isConnected ? "Connected" : "Off")
-          .font(.caption2)
-          .foregroundStyle(.secondary)
+        // Small and medium give the header half a large widget's width: the
+        // word would push the speaker's name into an ellipsis, and the dot says it.
+        if drawnFamily == .systemLarge {
+          Text(snapshot.isConnected ? "Connected" : "Off")
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+        }
       }
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel(snapshot.isConnected ? "Connected" : "Off")
     }
   }
 
@@ -153,9 +159,15 @@ struct MarshallWidgetView: View {
               .font(.system(size: 34, weight: .light, design: .rounded))
               .monospacedDigit()
               .contentTransition(.numericText())
-            Text("/ \(maximum)")
-              .font(.caption)
-              .foregroundStyle(.secondary)
+              .lineLimit(1)
+              .minimumScaleFactor(0.6)
+            // Between two buttons a small widget has room for the level alone;
+            // the bar underneath already shows how far it is to the top.
+            if drawnFamily != .systemSmall {
+              Text("/ \(maximum)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
           }
           .frame(maxWidth: .infinity)
         } else {
