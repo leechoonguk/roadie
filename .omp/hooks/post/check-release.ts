@@ -32,6 +32,10 @@
  *      reads; Android reads `RELEASE_REPO` in `app/src/updates.ts`. Each names
  *      the repository `app-release.ts` publishes to, or that platform's copies
  *      look somewhere no release ever arrives.
+ *   8. Public before published — `release()` in `app-release.ts` calls
+ *      `requirePublicRepository()` before it tags or builds. Installed copies
+ *      download the feed and archive without logging in, so a release from a
+ *      private repository is a 404 for every one of them.
  *
  * Reads files only (no keychain, no network). Dormant (cause `absent`) while the
  * app has no Info.plist.
@@ -47,7 +51,7 @@ import { printRuleHint } from "../lib/hook-rule-hint.ts";
 import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
 import { touchesPath } from "../lib/hook-scope.ts";
 import { dormant, passLine } from "../lib/hook-dormancy.ts";
-import { resolveProjectRoot } from "../lib/hook-project-root.ts";
+import { projectRoot } from "../lib/hook-project-root.ts";
 import { FEED_URL, RELEASE_REPO, releaseAssets } from "../lib/app-release.ts";
 import { plistArray, plistString, plistTrue } from "../lib/app-xcode-project.ts";
 
@@ -57,10 +61,9 @@ declare const process: { argv: string[]; exit(code?: number): never };
 // Constants
 // ============================================================
 
-const projectRoot = resolveProjectRoot();
-
 const APP_PLIST = "app/macos/MarshallBluetooth-macOS/Info.plist";
 const WIDGET_PLIST = "app/macos/MarshallWidget/Info.plist";
+const RELEASE_BUILDER = ".omp/hooks/lib/app-release.ts";
 const APP_ENTITLEMENTS = "app/macos/MarshallBluetooth-macOS/MarshallBluetooth.entitlements";
 const PODFILE = "app/macos/Podfile";
 const MACH_LOOKUP = "com.apple.security.temporary-exception.mach-lookup.global-name";
@@ -163,7 +166,21 @@ export function checkReleaseSync(): string[] {
 
   issues.push(...checkWorkflows());
   issues.push(...checkPlatformFeeds());
+  issues.push(...checkPublicPreflight());
   return issues;
+}
+
+/** Claim 8: `make release` refuses a private repository before anything is tagged. */
+function checkPublicPreflight(): string[] {
+  const source = read(RELEASE_BUILDER);
+  const body = /export function release\([^)]*\): void \{([\s\S]*?)\n\}\n/.exec(source)?.[1] ?? "";
+  const preflight = body.indexOf("requirePublicRepository()");
+  const tagging = body.indexOf('"tag", "-a"');
+  if (preflight >= 0 && tagging >= 0 && preflight < tagging) return [];
+  return [
+    `${RELEASE_BUILDER}: release() does not call requirePublicRepository() before it tags — a release from a private ` +
+      "repository is a 404 for every installed copy (they download without logging in)",
+  ];
 }
 
 /** Claim 7: the Windows, Linux and Android update paths name the repository releases go to. */

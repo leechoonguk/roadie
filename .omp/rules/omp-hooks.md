@@ -33,8 +33,8 @@ collide:
 
 | Prefix | Scope | Example |
 |---|---|---|
-| `app-` | App checks (`app/`) | `lib/app-duplicate-blocks.ts` (the duplicated-run detector and the `app/` scan), `lib/app-xcode-project.ts` (the pbxproj and Info.plist reader both Xcode-project checks share) |
-| `hook-` | Cross-cutting guard shared by every hook | `lib/hook-safety-guard.ts`, `lib/hook-dormancy.ts`, `lib/hook-visibility.ts`, `lib/hook-tool-paths.ts`, `lib/hook-scope.ts`, `lib/hook-rule-hint.ts`, `lib/hook-mutating-tools.ts`, `lib/hook-project-root.ts`, `lib/hook-publish-consent.ts` |
+| `app-` | App checks (`app/`) | `lib/app-duplicate-blocks.ts` (the duplicated-run detector and the `app/` scan), `lib/app-xcode-project.ts` (the pbxproj and Info.plist reader both Xcode-project checks share), `lib/app-registry.ts` (which Roadie.app copies Launch Services and the widget host know, and unregistering all but the ones to keep — `make run`, `make clean`, `make app-install`), `lib/app-doctor.ts` (`make doctor`, the read-only report on those registrations, the signing environment, the toolchain and Metro — every read fail-loud — and `requireMetro`, which `make run` calls first), `lib/app-release.ts` (`make dist`/`release`/`unrelease`/`app-install`, including `staleDemoNote`, the release-time note that what draws a README picture changed and the picture did not) |
+| `hook-` | Cross-cutting guard shared by every hook | `lib/hook-safety-guard.ts`, `lib/hook-dormancy.ts`, `lib/hook-visibility.ts`, `lib/hook-tool-paths.ts`, `lib/hook-scope.ts`, `lib/hook-rule-hint.ts`, `lib/hook-mutating-tools.ts`, `lib/hook-project-root.ts`, `lib/hook-publish-consent.ts`, `lib/hook-metrics.ts` |
 
 `lib/harness-env.d.ts` declares the few runtime globals and the host module the
 hooks use; it exports nothing and carries no scope.
@@ -46,6 +46,34 @@ patch body. Every write-path guard that read only `input.path` ignored `edit`
 entirely — measured in the harness this was ported from, where an immutable
 file was rewritten with `edit` while its guard stayed silent. The question has
 one answer now.
+
+**The project root is the hook's own location.** `lib/hook-project-root.ts`
+(the same file, with the same exported names, in ficus, Roadie, Juice and blescope)
+derives `projectRoot` from where the hook file lives (three levels above
+`.omp/hooks/<lib|pre|post>/`, realpath'd), never from the session's working directory: an
+agent session can run in a sibling project of the workspace while this
+project's hooks are loaded, and a root taken from `process.cwd()` then judges
+the sibling's files by this project's policy — about 40 blocked writes over two
+days, each worked around by writing a `.staged` file and moving it. Three
+consequences:
+
+- A pre hook that judges a path first asks `isInsideProject(toolPath(path, where))`,
+  with `where = eventWithCwd(event, ctx)`; a path outside the project is not this
+  harness's business and is never a violation. Relative paths resolve against the
+  event's own cwd when it carries one (else the context's, else the project root),
+  never `process.cwd()`. A shell or eval command whose `input.cwd` or event cwd is
+  outside the project (`commandRunsOutsideProject`) is skipped the same way.
+- Containment is `path.relative` over `canonical()` operands (realpath of the
+  deepest existing parent plus the rest): `/tmp` → `/private/tmp` and a symlinked
+  checkout are inside or outside by where they really are, and a string prefix
+  (`…/roadie-x`) is never mistaken for the root.
+- `touchesPath`/`touchesStrict` (`lib/hook-scope.ts`) treat an absolute path in
+  another project as out of scope even when it contains `app/macos/`.
+- `check-omp-hooks` (`checkProjectRootDerivation`) fails any hook, lib or extension
+  that reads `process.cwd()` or `ctx.cwd` to derive a path, and requires
+  `lib/hook-project-root.ts` itself to use `import.meta.url`. `eventWithCwd` is the only
+  reader of the context's cwd. The state directory of `extensions/continuity` is
+  `join(projectRoot, ".omp", "state")`, so a sibling's session never writes into this tree.
 
 | Rule (`.omp/rules/`) | Pre Hook | Post Hook |
 |---|---|---|
@@ -62,7 +90,7 @@ one answer now.
 | `release.md` | `strict-release-route.ts` + `strict-publish-consent.ts` | `check-release.ts` |
 | `omp-conventions.md` | — | `check-omp-rules.ts` |
 | `omp-naming-consistency.md` | — | `check-omp-rules.ts` (rule prefix↔globs) + `check-omp-hooks.ts` (hook name↔paths) |
-| `omp-hooks.md` | — | `check-omp-hooks.ts` |
+| `omp-hooks.md` | — | `check-omp-hooks.ts` + `check-omp-probes.ts` (the pre hooks' verdicts as a table) |
 | `omp-skills.md` | — | `check-omp-skills.ts` |
 | `RULES.md` (sticky) | `strict-no-subagents.ts` | — |
 | `RULES.md` (sticky) | `strict-additive-writes.ts` | — |
@@ -134,26 +162,28 @@ structure rather than by indentation or line width.
 ```
 .omp/hooks/
 +-- pre/
-| +-- strict-command-routing.ts      # Cross-cutting: blocks direct tool invocations owned by a make target (tsc/eslint/jest/swiftc/pod/xcodebuild/RN CLI, the desktop bundler, the README recorder, electron-builder, electron, gradlew) and truncated gates
+| +-- strict-command-routing.ts      # Cross-cutting: blocks direct tool invocations owned by a make target (tsc/eslint/jest/swiftc/pod/xcodebuild/RN CLI, the desktop bundler, the README recorder, electron-builder, electron, gradlew) and truncated gates (`truncatesGate`: a gate redirected to a file passes; the block names both allowed forms); skips a command whose cwd is another project
 | +-- strict-no-subagents.ts         # Cross-cutting: blocks task (subagent) creation on an omlx (local) session model; otherwise routes every spawn to Sonnet via before_subagent_spawn
-| +-- strict-additive-writes.ts      # Cross-cutting: blocks an edit only when an import/bridge/registration entry would survive nowhere in the file (dedupe and same-patch moves pass; __tests__/ is exempt)
-| +-- strict-verified-git.ts         # Cross-cutting: runs make verify before Git commit/push; blocks a commit whose project index differs from its worktree
+| +-- strict-additive-writes.ts      # Cross-cutting: blocks an edit only when an import/bridge/registration entry would survive nowhere in the file and is still referenced (dedupe, same-patch moves, a cutover that removed every reference, and __tests__/ pass); skips files outside this project
+| +-- strict-verified-git.ts         # Cross-cutting: runs make verify before Git commit/push; blocks a commit whose project index differs from its worktree; skips a command running in another project
 | +-- strict-publish-consent.ts      # Cross-cutting: blocks a commit/push/release the current user turn did not ask for
 | +-- strict-release-route.ts        # Cross-cutting: blocks raw git tag writes, version-tag pushes and gh release writes (make release owns them)
-| +-- strict-tooling.ts              # Cross-cutting: blocks writes of Python/Ruby/shell scripts, native sources outside app/macos/ and app/ios/, and root script dirs (write + edit MV)
+| +-- strict-tooling.ts              # Cross-cutting: blocks writes of Python/Ruby/shell scripts, native sources outside app/macos/ and app/ios/, and root script dirs (write + edit MV); a path outside this project is never a violation
++-- probes.json                        # The pre hooks' verdicts as data: {name?, hook, tool, input, cwd?, turn?, expect} — run by check-omp-probes
 +-- post/
   +-- check-app-native-boundary.ts   # Read-only: React-free Swift core/shared/widget, CoreBluetooth only in Native/Core, declaration-only bridge files, NativeModules only in src/native, platform swaps hold, one JS implementation
   +-- check-app-duplicate-blocks.ts  # Read-only: duplicated block runs in app/ sources (delete, don't renumber)
   +-- check-app-ios-project.ts       # Read-only: iOS Xcode project — shared macOS sources in both targets, group. App Group, presses as LiveActivityIntents on iOS 17, background Bluetooth, widget embedded, macOS team
-  +-- check-app-macos-project.ts     # Read-only: Xcode target membership, team signing, one App Group, one product name, menu bar residency, Bluetooth declared
+  +-- check-app-macos-project.ts     # Read-only: Xcode target membership, team signing, one App Group, one product name, menu bar residency, Bluetooth declared, one build location (DerivedData.noindex, ESLint ignore), run/clean keep one registered copy
   +-- check-app-protocol-parity.ts   # Read-only: Swift ↔ TypeScript agreement on GATT UUIDs, EQ/volume scales, product-name tokens, press model
-  +-- check-code-layout.ts           # Read-only: comments, TS file layout and member order, whitespace (all code)
+  +-- check-code-layout.ts           # Read-only: comments, TS file layout and member order, whitespace (all code), no edit flag left in a file, no Bluetooth address literal in code
   +-- check-tooling.ts               # Read-only: the tooling language policy (TypeScript + Swift only)
   +-- check-readme.ts                # Read-only: README links, make targets and docs/ pictures resolve; the demo speaker stays out of every shipped build
   +-- check-release.ts               # Read-only: Sparkle feed URL, EdDSA key, sandbox installer entitlements, tag-driven versions, Sparkle pod, installer workflows only add assets
   +-- check-makefiles.ts             # Read-only: Makefile ↔ root-makefile.md, verify membership, make targets the harness names
   +-- check-omp-types.ts             # Read-only: tsc --noEmit over .omp/tsconfig.json
   +-- check-omp-hooks.ts             # Read-only: omp-hooks.md directory structure sync + hook contract
+  +-- check-omp-probes.ts            # Read-only: every pre hook answers its probe table (.omp/hooks/probes.json)
   +-- check-omp-rules.ts             # Read-only: rule frontmatter, naming, TTSR triggers, no dated history
   +-- check-omp-skills.ts            # Read-only: skills catalog ↔ SKILL.md discovery
   +-- check-verify.ts                # Runs the root make verify (the gate's own runner, outside verify)
@@ -232,6 +262,29 @@ agent types bypass it. `strict-no-subagents` gates on the session model's
 provider: an `omlx` (local) model blocks the spawn, any other lets it through
 and `before_subagent_spawn` pins the child to Sonnet.
 
+### Block recording and probes
+
+A refusal that is wrong costs more than one that is missing, and until it is counted
+nobody sees the cost: a stale project root blocked about 40 writes over two days and
+left no trace but the transcript. So every pre hook wraps its handler:
+
+```ts
+pi.on("tool_call", recordedBlocks("strict-x", (event, ctx) => { … }));
+```
+
+`recordedBlocks` (`lib/hook-metrics.ts`) returns the verdict unchanged and, for
+`{ block: true }`, appends one line — hook, tool, the head of the reason, milliseconds —
+to `.omp/state/hook-metrics.jsonl` (gitignored) through `recordBlock`. `make hook-report`
+lists the blocks per hook and the most frequent reasons. The post-hook section of that
+report fills in only in a session that enables the post hooks: they are listed in
+`disabledExtensions` and run as CLIs through `make verify`, which bypasses `guarded()`.
+`check-omp-hooks` requires the wrapper on every pre hook (`checkBlocksRecorded`).
+
+The pre hooks' verdicts are also a table, `.omp/hooks/probes.json`, run by
+`check-omp-probes` in `make verify`: a hook change that flips a verdict fails the gate
+before a session finds out. A new pre hook ships with a case; a new failure class is a
+new case, not a note.
+
 ### Reading the edited path (`path-raw-ok`)
 
 An anchored edit does not hand the hook a clean path: it carries a content tag,
@@ -268,7 +321,8 @@ A `tool_call` handler's second argument is the extension context. An exception
 thrown inside a pre hook is promoted to a **tool failure**: the tool call dies
 and the agent receives the crash instead of its result. The decision to block is
 made from `event` alone and the parameter is written `_ctx: unknown`. If a hook
-genuinely needs it, it says why with `// ctx-ok: <reason>`.
+genuinely needs it (the session's cwd through `eventWithCwd`, which reads it inside a
+`try`, or the session branch for consent), it says why with `// ctx-ok: <reason>`.
 
 ## Post-Hooks
 
@@ -318,18 +372,19 @@ reviewed.
 
 |Hook File|Validates|Checks|
 |---|---|---|
-|`check-app-native-boundary.ts`|The React Native ↔ native boundary under `app/`|`Shared/`, `Native/Core/`, `MarshallWidget/`, `CoreTests/` Swift: no `import React*`, no `RCT…` symbol; `import CoreBluetooth` only under `Native/Core/`; `Native/*.m` holds only `#import`/`RCT_EXTERN_MODULE`/`RCT_EXTERN_METHOD`/`@end` (no `@implementation`, no `{`) and pairs with `Native/<stem>.swift`; adapter `@objc` instance selectors equal the `.m`'s `RCT_EXTERN_METHOD` selectors both ways (arguments need an explicit `@objc(selector:)`; read counts compared against declared counts); `NativeModules` read only in `app/src/native/*.ts` within `app/src/`, `app/desktop/src/`, `app/mobile/src/` + `App.tsx`/`index.js` (tests may mock it); every swap in `app/desktop/build.ts` and `app/metro.config.js` names an existing wrapper and an existing replacement that exports every runtime name of the wrapper, every wrapper that reads `NativeModules` is swapped in both, and a swap file that parses to no swap is reported; no file under `app/desktop/src/` or `app/mobile/src/` declares a function or constant that `app/src/protocol.ts`, `app/src/controls.ts` or `app/src/ble/client.ts` exports; no `UserDefaults(suiteName:)` in native Swift (app ↔ widget state goes through `SharedStore` files); every method a protocol extension defines is declared by that protocol (matched by name and argument labels, protocols collected across all native trees; an unreadable body is reported); comments are stripped first; dormant (`absent`) without `app/macos/`|
+|`check-app-native-boundary.ts`|The React Native ↔ native boundary under `app/`|`Shared/`, `Native/Core/`, `MarshallWidget/`, `CoreTests/` Swift: no `import React*`, no `RCT…` symbol; `import CoreBluetooth` only under `Native/Core/`; `Native/*.m` holds only `#import`/`RCT_EXTERN_MODULE`/`RCT_EXTERN_METHOD`/`@end` (no `@implementation`, no `{`) and pairs with `Native/<stem>.swift`; adapter `@objc` instance selectors equal the `.m`'s `RCT_EXTERN_METHOD` selectors both ways (arguments need an explicit `@objc(selector:)`; read counts compared against declared counts); `NativeModules` read only in `app/src/native/*.ts` within `app/src/`, `app/desktop/src/`, `app/mobile/src/` + `App.tsx`/`index.js` (tests may mock it); every swap in `app/desktop/build.ts` and `app/metro.config.js` names an existing wrapper and an existing replacement that exports every runtime name of the wrapper, every wrapper that reads `NativeModules` is swapped in both, and a swap file that parses to no swap is reported; no file under `app/desktop/src/` or `app/mobile/src/` declares a function or constant that `app/src/protocol.ts`, `app/src/controls.ts` or `app/src/ble/client.ts` exports; no `UserDefaults(suiteName:)` in native Swift (app ↔ widget state goes through `SharedStore` files); every method a protocol extension defines is declared by that protocol (matched by name and argument labels, protocols collected across all native trees; an unreadable body is reported); no `ProgressView`, `Toggle`, `Slider`, `TextField` or `Picker` in `MarshallWidget/` (AppKit-backed controls that WidgetKit and `ImageRenderer` draw as placeholders); comments are stripped first; dormant (`absent`) without `app/macos/`|
 |`check-app-duplicate-blocks.ts`|Duplicated block runs in `app/` sources (TS, Swift, Objective-C, Kotlin — `app/src`, `app/__tests__`, `app/desktop/src`, `app/mobile/src`, the macOS native trees, the iOS and Android shells; data formats exempt)|A non-overlapping repeat of 24+ identical consecutive lines (≥8 distinct) is a duplicated block — report it and instruct deletion, not renumbering|
-|`check-app-macos-project.ts`|The Xcode project for the macOS app (`app/macos/`)|Every `.swift`/`.m` under a target's tree (and `Shared/`) is in that target's Sources phase, no stale or cross-tree reference, no two sources share a file name; every configuration signing with entitlements names a `DEVELOPMENT_TEAM`; both entitlements files and both Info.plists name one `$(TeamIdentifierPrefix)…` App Group; the app's `PRODUCT_NAME` equals every `CFBundleDisplayName`; an `LSUIElement` app returns `false` from `applicationShouldTerminateAfterLastWindowClosed`; a CoreBluetooth app declares `NSBluetoothAlwaysUsageDescription` and, sandboxed, `com.apple.security.device.bluetooth`; declared-vs-resolved source counts compared so a defeated parse reports; dormant (`absent`) without the project file|
+|`check-app-macos-project.ts`|The Xcode project for the macOS app (`app/macos/`), the Makefile's `run`/`clean` recipes and `app/.eslintrc.js`|Every `.swift`/`.m` under a target's tree (and `Shared/`) is in that target's Sources phase, no stale or cross-tree reference, no two sources share a file name; every configuration signing with entitlements names a `DEVELOPMENT_TEAM`; both entitlements files and both Info.plists name one `$(TeamIdentifierPrefix)…` App Group; the app's `PRODUCT_NAME` equals every `CFBundleDisplayName`; an `LSUIElement` app returns `false` from `applicationShouldTerminateAfterLastWindowClosed`; a CoreBluetooth app declares `NSBluetoothAlwaysUsageDescription` and, sandboxed, `com.apple.security.device.bluetooth`; one build location — the workspace settings, every `xcodebuild`, `DERIVED_DATA` and the release builder name `app/macos/build/DerivedData.noindex` and ESLint ignores `macos/build/**`; `make run` probes Metro on port 8081 before `$(MAKE) build`, unregisters the Release widget and every other registered copy, and `make clean` unregisters build copies before deleting them; declared-vs-resolved source counts compared so a defeated parse reports; dormant (`absent`) without the project file|
 |`check-app-ios-project.ts`|The Xcode project for the iOS app (`app/ios/`), which compiles the macOS sources|The app target compiles its own tree, `Shared/`, `Native/*.swift`+`*.m`, `Native/Core/` less AppKit files, and every widget file declaring an `AppIntent`; the widget target compiles `Shared/`, `MarshallWidget/` and the press core (`MarshallScanner`, `MarshallProtocol`, `OneShotSession`); every compiled reference resolves under `app/ios/` or `app/macos/`; no widget source imports React; both Info.plists and both entitlements name one `group.` App Group; every widget `AppIntent` is a `LiveActivityIntent` under `#if os(iOS)`; every configuration deploys to iOS 17+; the app declares `NSBluetoothAlwaysUsageDescription` and `bluetooth-central`; a PlugIns copy phase embeds an `.appex`; every configuration signs with the macOS project's single team; declared-vs-resolved source counts compared; dormant (`absent`) without the project file|
 |`check-app-protocol-parity.ts`|Swift ↔ TypeScript agreement on the speaker protocol and the press model|`UUIDS` (`app/src/protocol.ts`) equal `MarshallScanner`'s `CBUUID(string:)` constants by name (16-bit forms expanded); `EQ_STEPS` and `FALLBACK_MAX_VOLUME` equal `EQScale` and `VolumeScale`; the product-name token sets are equal; `ControlAction`/`ControlChange` kinds (`app/src/controls.ts`) equal the Swift enums' cases (`Shared/ControlStep.swift`); a side that parses to nothing is reported, never compared; a missing file is reported; dormant (`absent`) without `app/src/protocol.ts`|
-|`check-code-layout.ts`|Code layout across every code surface (`app/` TS + package-root config, `app/desktop/` and `app/mobile/` TS, `app/macos/` Swift/ObjC, the iOS shell's Swift and the Android shell's Kotlin, `.omp/hooks/`, `.omp/extensions/`)|No commented-out code, no work markers; JSDoc header on every hook/lib; TS/JS imports → constants → `export default` → helpers, never `let` for a module constant; TS class members fields → constructor → public → private; whitespace on every text asset (no trailing whitespace, no tab indent outside the Makefile, LF only, exactly one final newline)|
-|`check-tooling.ts`|Tooling language policy across the project|No `.py`/`.rb`/`.sh`/`.bash`/`.zsh` anywhere; `.swift`/`.m`/`.mm`/`.h` only under `app/macos/` and `app/ios/`; `.omp/hooks/` and `.omp/extensions/` TypeScript only; no project-root `scripts/`/`tools/`/`bin/`/`utils/`; scripts only under `.omp/hooks/`, `.omp/extensions/`, `app/`; every `check-*` target runs `node .omp/hooks/...`; extension `ctx.compact/shutdown/abort` rejections handled|
+|`check-code-layout.ts`|Code layout across every code surface (`app/` TS + package-root config, `app/desktop/` and `app/mobile/` TS, `app/macos/` Swift/ObjC, the iOS shell's Swift and the Android shell's Kotlin, `.omp/hooks/`, `.omp/extensions/`)|No commented-out code, no work markers; JSDoc header on every hook/lib; TS/JS imports → constants → `export default` → helpers, never `let` for a module constant; TS class members fields → constructor → public → private; whitespace on every text asset (no trailing whitespace, no tab indent outside the Makefile, LF only, exactly one final newline); no line of any text asset carries the edit flag the write guard accepts (`//`, `#`, `<!-- -->` or `*` followed by the words `intent: replace`) — it is an instruction to one edit, never content; no Bluetooth address literal (six hex bytes joined by `:` or `-`) in any code surface except the documented placeholders (`AA:00:00:00:00:0n`, all-zero)|
+|`check-tooling.ts`|Tooling language policy across the project|No `.py`/`.rb`/`.sh`/`.bash`/`.zsh` anywhere; `.swift`/`.m`/`.mm`/`.h` only under `app/macos/` and `app/ios/`; `.omp/hooks/` and `.omp/extensions/` TypeScript only (except `.omp/hooks/probes.json`); no project-root `scripts/`/`tools/`/`bin/`/`utils/`; scripts only under `.omp/hooks/`, `.omp/extensions/`, `app/`; every `check-*` target runs `node .omp/hooks/...`; extension `ctx.compact/shutdown/abort` rejections handled|
 |`check-readme.ts`|`README.md` and its pictures (`docs/`) ↔ the code, and the demo speaker that records them (`app/desktop/src/demo/`)|Every relative link and image in the README names an existing file (fenced and inline code is not a link); every `make <target>` the README writes as code is a Makefile target; every file in `docs/` is shown by the README and every picture it shows is in `docs/`; `app/desktop/build.ts` bundles the demo speaker only behind `process.env.ROADIE_DEMO === '1'`, no file under `app/src`, `app/desktop/src`, `app/mobile/src` (or `App.tsx`, `index.js`, `metro.config.js`) outside the demo directory imports it, and neither the Makefile nor a workflow sets `ROADIE_DEMO`; the demo speaker exports every runtime name of `app/src/native/marshallBle.ts`; dormant (`absent`) without `README.md`|
-|`check-release.ts`|The in-app update path on every platform (`app/macos/` plists, entitlements, Podfile; `app/desktop/package.json`; `app/src/updates.ts`) ↔ `lib/app-release.ts`, and the installer workflows (`.github/workflows/desktop.yml`, `native.yml`)|App `SUFeedURL` equals `FEED_URL` from `lib/app-release.ts`; `SUPublicEDKey` is a 32-byte base64 EdDSA key; a sandboxed app sets `SUEnableInstallerLauncherService` and holds the `$(PRODUCT_BUNDLE_IDENTIFIER)-spks`/`-spki` mach-lookup exceptions; both Info.plists read `$(MARKETING_VERSION)`/`$(CURRENT_PROJECT_VERSION)`; the Podfile declares the `Sparkle` pod; dormant (`absent`) without the app Info.plist; each installer workflow exists, runs on `release: types: [published]`, limits its push trigger to branches, guards every `gh release upload` step with `if: github.event_name == 'release'`, and uploads no name or glob (the command's and the matrix `assets:` entries) matching a `RELEASE_ASSETS` file; `app/desktop/package.json` `build.publish` is github `RELEASE_REPO`, `desktop.yml` uploads `latest.yml` and `latest-linux.yml`, and `app/src/updates.ts` `RELEASE_REPO` equals `RELEASE_REPO`|
+|`check-release.ts`|The in-app update path on every platform (`app/macos/` plists, entitlements, Podfile; `app/desktop/package.json`; `app/src/updates.ts`) ↔ `lib/app-release.ts`, and the installer workflows (`.github/workflows/desktop.yml`, `native.yml`)|App `SUFeedURL` equals `FEED_URL` from `lib/app-release.ts`; `SUPublicEDKey` is a 32-byte base64 EdDSA key; a sandboxed app sets `SUEnableInstallerLauncherService` and holds the `$(PRODUCT_BUNDLE_IDENTIFIER)-spks`/`-spki` mach-lookup exceptions; both Info.plists read `$(MARKETING_VERSION)`/`$(CURRENT_PROJECT_VERSION)`; the Podfile declares the `Sparkle` pod; dormant (`absent`) without the app Info.plist; each installer workflow exists, runs on `release: types: [published]`, limits its push trigger to branches, guards every `gh release upload` step with `if: github.event_name == 'release'`, and uploads no name or glob (the command's and the matrix `assets:` entries) matching a `RELEASE_ASSETS` file; `app/desktop/package.json` `build.publish` is github `RELEASE_REPO`, `desktop.yml` uploads `latest.yml` and `latest-linux.yml`, and `app/src/updates.ts` `RELEASE_REPO` equals `RELEASE_REPO`; `release()` in `lib/app-release.ts` calls `requirePublicRepository()` before it tags|
 |`check-makefiles.ts`|Makefile ↔ `root-makefile.md`|Documented targets exist and actual targets are documented; every target has `##` help; no catch-all rule; `node .omp/...` recipes point at existing files; every post hook has its `check-<name>` target; **verify membership** — every post-hook target except `check-verify` is a `verify` prerequisite and `check-verify` is not, and the prerequisite list equals the `make verify` row (both directions); every `make <target>` written as code in the harness exists|
 |`check-omp-types.ts`|Harness TypeScript type-checks|`tsc --noEmit` over `.omp/tsconfig.json` with `app/node_modules/typescript`; reports the first 3 `error TS` lines|
-|`check-omp-hooks.ts`|`.omp/hooks/` ↔ `omp-hooks.md` + hook contract + rule↔hook mapping|Directory tree ↔ disk both ways; this contract table covers every post hook; `post/check-*` and `pre/strict-*` prefixes; lib names `app-*`/`hook-*`; post hooks call `buildSafeWarning(event.toolName, "<hook>", issues, fixHint)` + `wrapWarning`, never `lastWarning`, never block, route every `tool_result` body through `guarded("<hook>", event, …)`, gate on `MUTATING_TOOLS`, declare a path scope, name an anchor for existence demands, call `printRuleHint` in the CLI tail and resolve a rule; pre hooks return `{ block: true }`, strip the path tag, cover `eval`, and do not read `ctx`; scoped hook names reference their paths; only `check-verify` runs a gate binary; harness guardrails; every post hook listed in `disabledExtensions`; literal warnings name a place|
+|`check-omp-hooks.ts`|`.omp/hooks/` ↔ `omp-hooks.md` + hook contract + rule↔hook mapping|Directory tree ↔ disk both ways; this contract table covers every post hook; `post/check-*` and `pre/strict-*` prefixes; lib names `app-*`/`hook-*`; post hooks call `buildSafeWarning(event.toolName, "<hook>", issues, fixHint)` + `wrapWarning`, never `lastWarning`, never block, route every `tool_result` body through `guarded("<hook>", event, …)`, gate on `MUTATING_TOOLS`, declare a path scope, name an anchor for existence demands, call `printRuleHint` in the CLI tail and resolve a rule; pre hooks return `{ block: true }`, strip the path tag, cover `eval`, and do not read `ctx`; scoped hook names reference their paths; only `check-verify` runs a gate binary; harness guardrails; every post hook listed in `disabledExtensions`; literal warnings name a place; **project root** — no hook, lib or extension reads the session's working directory (`process.cwd` or `ctx.cwd`) to find its root; `lib/hook-project-root.ts` derives it from the hook file's own location|
+|`check-omp-probes.ts`|The pre hooks' verdicts (`probes.json` ↔ `pre/`)|Every case `{name?, hook, tool, input, cwd?, turn?, expect}` is fed to the real pre hook through a fake `pi` (event and context carry the case's cwd; `turn` is the latest user message); the verdict equals `expect`; every pre hook has a case; the table holds a `mention` (text that does not run), `dry-run`, `sibling-path`, `sibling-cwd`, `gate-redirect` (redirect then `echo EXIT=$?`) and `gate-piped` case; `OMP_HOOK_PROBE=1` keeps probe blocks out of the metrics|
 |`check-omp-rules.ts`|Dynamic rule-loading contract|`AGENTS.md` has no `@rules/` imports; no `rules/RULES.md` shadow; valid frontmatter (`description`, `globs`, `alwaysApply=false`); always-apply set ≤ 2; `app-`/`omp-`/`root-` prefix ↔ globs, prefix-less only when globs span ≥2 top-level dirs; procedure sections ordered and verified; no duplicated line in a code fence; reference snippets match their files; TTSR triggers well-formed, documented, clean against their scope, live per stream (`omp ttsr test`); no dated history under `.omp/`|
 |`check-omp-skills.ts`|`.omp/rules/omp-skills.md` ↔ `.omp/skills/` catalog|Every discovered `SKILL.md` has one catalog row and every row a `SKILL.md`; `name` matches its directory; `description`, Trigger, Verification non-empty; Lifecycle `active`/`deprecated`; **skill harness contract** — `enforced-by` equals the name-derived hook set, each declared hook exists and is a `verify` prerequisite, a procedure skill references a `rule://` domain|
 |`check-verify.ts`|The root gate|Runs `make verify` (lint, typecheck, test, swift-check and every other harness check) and quotes the last failing lines; skips explicit `make` commands; not a `verify` prerequisite because it runs `verify`|

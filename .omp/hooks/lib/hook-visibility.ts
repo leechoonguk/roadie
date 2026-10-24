@@ -23,12 +23,12 @@
  * its handler body through here.
  */
 // @ts-expect-error — Node builtin, not project-compiled
-import { appendFileSync, existsSync, mkdirSync } from "node:fs";
+import { appendFileSync, mkdirSync } from "node:fs";
 // @ts-expect-error — Node builtin, not project-compiled
 import { dirname, join } from "node:path";
+import { record, type Outcome } from "./hook-metrics.ts";
+import { projectRoot } from "./hook-project-root.ts";
 
-const cwd = process.cwd();
-const projectRoot = existsSync(join(cwd, ".omp")) ? cwd : join(cwd, "..");
 const crashLog = join(projectRoot, ".omp", "state", "hook-crash.log");
 
 /**
@@ -50,25 +50,46 @@ type ContentOverride = { content: ContentChunk[] };
  * it. The body's own return value passes through untouched, so the guard is
  * invisible until something breaks.
  *
+ * Every run is also measured here — this is the only place that sees all of
+ * them — so `make hook-report` can say what the hooks cost, which warnings were
+ * acted on, and what the rule channel delivered. The event is handed to the
+ * recorder because its `input` names the file a finding is about; the content
+ * override the body may return says nothing about which file it was.
+ *
  * A body that returns a promise is awaited through the same path: every handler
  * in this repository is synchronous today, and a future async one must not
  * silently reopen the hole this wrapper exists to close.
  */
 export function guarded<T>(hookName: string, event: GuardedEvent, body: () => T): T | ContentOverride {
+  const startedAt = Date.now();
   try {
     const result = body();
     if (isThenable(result)) {
       // The rejection is reported as the same override the sync path returns;
       // `as T` is the promise-of-union the caller's own signature already is.
       return (result as PromiseLike<unknown>).then(
-        (value) => value,
-        (error: unknown) => report(hookName, event, error),
+        (value) => {
+          record(hookName, outcomeOf(value), Date.now() - startedAt, event);
+          return value;
+        },
+        (error: unknown) => {
+          record(hookName, "crashed", Date.now() - startedAt, event);
+          return report(hookName, event, error);
+        },
       ) as T;
     }
+    record(hookName, outcomeOf(result), Date.now() - startedAt, event);
     return result;
   } catch (error) {
+    record(hookName, "crashed", Date.now() - startedAt, event);
     return report(hookName, event, error);
   }
+}
+
+/** A returned `content` override is the hook speaking; anything else is silence. */
+function outcomeOf(result: unknown): Outcome {
+  const spoke = typeof result === "object" && result !== null && "content" in result;
+  return spoke ? "warned" : "quiet";
 }
 
 function report(hookName: string, event: GuardedEvent, error: unknown): ContentOverride {

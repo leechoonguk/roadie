@@ -1,4 +1,6 @@
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+import { recordedBlocks } from "../lib/hook-metrics.ts";
+import { commandRunsOutsideProject, eventWithCwd } from "../lib/hook-project-root.ts";
 
 /**
  * Releases go through `make release` (rule://release), blocked at the tool boundary.
@@ -32,10 +34,13 @@ const SHELL_ROUTES = routes(SHELL_START);
 const EVAL_ROUTES = routes(EVAL_START);
 
 export default function strictReleaseRoute(pi: ExtensionAPI): void {
-  pi.on("tool_call", (event: { toolName?: string; input?: Record<string, unknown> }) => {
+  // ctx-ok: the session cwd only locates a relative path (eventWithCwd reads it inside a try) — it is never a root.
+  pi.on("tool_call", recordedBlocks("strict-release-route", (event: { toolName?: string; input?: Record<string, unknown> }, ctx: unknown) => {
     // channel: bash + eval — an eval body can shell out (execSync("git tag v1.2.3")).
     if (event.toolName !== "bash" && event.toolName !== "eval") return;
     const body = String(event.input?.command ?? event.input?.code ?? "");
+    // A release made from a sibling project's directory is that project's route, not this one's.
+    if (commandRunsOutsideProject(event.input, eventWithCwd(event, ctx))) return;
     for (const [pattern, what] of event.toolName === "eval" ? EVAL_ROUTES : SHELL_ROUTES) {
       if (!pattern.test(body)) continue;
       return {
@@ -47,7 +52,7 @@ export default function strictReleaseRoute(pi: ExtensionAPI): void {
       };
     }
     return undefined;
-  });
+  }));
 }
 
 function routes(start: string): ReadonlyArray<[RegExp, string]> {

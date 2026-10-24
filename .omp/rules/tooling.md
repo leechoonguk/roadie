@@ -47,7 +47,8 @@ scan) and `check-omp-types.ts` (the harness type-checks).
   Gradle wrapper (`gradlew`) is vendored, not written here.
 - **`.omp/hooks/` and `.omp/extensions/` are TypeScript only.** Hooks and libs
   import each other, so a stray `.js`/`.mjs` breaks the import graph and the
-  type contract.
+  type contract. The one data file is `.omp/hooks/probes.json`, the pre hooks'
+  verdict table that `check-omp-probes` reads.
 - **No project-root `scripts/`, `tools/`, `bin/`, `utils/`.** Tooling outside
   `.omp/hooks/` is invisible to `check-omp-hooks` (no rule↔hook mapping, no
   contract table) and to `make`, so nothing runs it.

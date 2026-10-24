@@ -36,7 +36,7 @@ builds (`0.0.0`, `0.0.0-ci.N`, a Debug Mac build) never check.
 |---|---|---|
 | Consent | `strict-publish-consent.ts` | `make release` / `make unrelease` when the current user turn does not ask for a release (or asks and forbids it); `make release … DRY_RUN=1` is exempt |
 | Route | `strict-release-route.ts` | raw `git tag` writes, pushing a version tag, `gh release create/delete/edit/upload/delete-asset` |
-| Consistency | `check-release.ts` (in `make verify`) | a feed URL other than the one `app-release.ts` publishes, a malformed `SUPublicEDKey`, a sandboxed app without the installer service and its mach-lookup exceptions, a literal version in either Info.plist, no Sparkle pod, an installer workflow (`desktop.yml`, `native.yml`) that is missing, does not run on a published release, builds tag pushes, uploads unguarded, or uploads a name matching `Roadie-<v>-macos.dmg`, `appcast.xml` or `checksums.txt`; a desktop `build.publish`, a `desktop.yml` without `latest.yml`/`latest-linux.yml`, or an Android `RELEASE_REPO` naming another repository |
+| Consistency | `check-release.ts` (in `make verify`) | a feed URL other than the one `app-release.ts` publishes, a malformed `SUPublicEDKey`, a sandboxed app without the installer service and its mach-lookup exceptions, a literal version in either Info.plist, no Sparkle pod, an installer workflow (`desktop.yml`, `native.yml`) that is missing, does not run on a published release, builds tag pushes, uploads unguarded, or uploads a name matching `Roadie-<v>-macos.dmg`, `appcast.xml` or `checksums.txt`; a desktop `build.publish`, a `desktop.yml` without `latest.yml`/`latest-linux.yml`, or an Android `RELEASE_REPO` naming another repository; a `release()` that does not refuse a non-public repository before it tags |
 
 ## Versions
 
@@ -75,13 +75,20 @@ current version.
    framework, `codesign --verify --deep --strict`) and signs the archive, without
    publishing. Install it by hand to try it.
 3. `make release bump=patch|minor|major DRY_RUN=1` — every preflight check, the
-   next version and its notes; publishes nothing and needs no request.
+   next version and its notes; publishes nothing and needs no request. The
+   preflight refuses a repository that is not public: installed copies download
+   `releases/latest/download/appcast.xml` and the archive without logging in, so
+   a release made from a private repository is a 404 for every one of them.
+   It also prints a note — it blocks nothing — when what draws a README picture
+   changed since the last tag and the picture did not (`staleDemoNote`: the screens and
+   the demo script against `docs/demo.gif`, the widget views and the snapshot tool
+   against the two widget pictures); re-record with `make demo` and
+   `make widget-snapshots`, look at the result, and commit it first.
 4. `make release bump=…` — only when the user asks in the current turn. It runs
    `make verify`, rebuilds via `dist`, tags, pushes the tag, creates the GitHub
    release with `Roadie-<version>-macos.dmg`, `appcast.xml` and `checksums.txt`, and verifies
    both the attached assets and that the latest release's `appcast.xml` now
-   names the new version (read through `gh`; it warns when the repository is
-   not public, because installed copies download without logging in).
+   names the new version (read through `gh`).
 5. Publishing the release starts `.github/workflows/desktop.yml`, which builds
    the Windows and Linux app (`app/desktop`, `make desktop-dist`) on GitHub's
    runners and attaches `Roadie-<version>-windows-setup.exe` (+ its `.blockmap`),
@@ -108,6 +115,7 @@ Never move or reuse a published tag: Sparkle and users' caches key on the versio
 
 - Tag, push a tag, or create/edit/delete a GitHub release by hand — `make release` / `make unrelease`
 - Publish a release the user did not ask for in the current turn
+- Release from a repository that is not public — installed copies cannot reach its feed
 - Hard-code a version in an Info.plist or a target's build settings
 - Regenerate the Sparkle key while a release is installed anywhere — export and import the existing one
 - Change `RELEASE_REPO` or an asset name in `app-release.ts` without the app's `SUFeedURL` (installed copies keep the old URL until they update)

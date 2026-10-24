@@ -14,6 +14,12 @@
  *   3. TypeScript class member order: fields → constructor → public → private
  *   4. whitespace: no trailing whitespace, no tab indent outside Makefile
  *      recipes, LF only, exactly one final newline
+ *   5. no edit flag left in a file: a line carrying the marker the write guard
+ *      accepts to let a replacement through (see EDIT_MARKER) is an instruction
+ *      to a tool, not content, in any text asset (`//`, `#`, `<!-- -->`, `*`)
+ *   6. no device literal in code: a Bluetooth address (six hex bytes joined by
+ *      `:` or `-`) is a real speaker or a hardcoded stand-in for one; only the
+ *      documented placeholders (the `AA:00:00:00:00:0n` family, all-zero) may appear
  *
  * Arrangement drift is invisible in review but makes every file a new puzzle,
  * so it is checked rather than asked for.
@@ -27,13 +33,11 @@ import { buildSafeWarning, resetSuppression, wrapWarning } from "../lib/hook-saf
 import { guarded } from "../lib/hook-visibility.ts";
 import { printRuleHint } from "../lib/hook-rule-hint.ts";
 import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
-import { resolveProjectRoot, WALK_EXCLUDES } from "../lib/hook-project-root.ts";
+import { projectRoot, WALK_EXCLUDES } from "../lib/hook-project-root.ts";
 
 // ============================================================
 // Constants
 // ============================================================
-
-const projectRoot = resolveProjectRoot();
 
 /** Text assets held to the whitespace standard. */
 const HYGIENE_EXTENSIONS = [".ts", ".tsx", ".js", ".mjs", ".swift", ".m", ".h", ".kt", ".md", ".yml", ".yaml", ".css", ".html"];
@@ -82,6 +86,27 @@ const NATIVE_ROOTS = [
 
 /** The JS platform trees: the Windows/Linux app and the Android-only modules. */
 const PLATFORM_ROOTS = ["app/desktop/src", "app/mobile/src"];
+
+/**
+ * The edit flag the write guard (`strict-additive-writes`) accepts to let a
+ * replacement through. It belongs to one edit, never to the file: a marker that
+ * stays ships (one did, for a day). Spelled as a pattern so this source never
+ * carries the flag itself; a mention inside backticks or quotes is prose.
+ */
+const EDIT_MARKER = new RegExp(String.raw`(?<![\x60'"])(?:\/\/|#|<!--)\s*intent:\s*replace\b|^\s*\*\s*intent:\s*replace\b`, "i");
+
+/** Six hex bytes joined by `:` or `-` — a Bluetooth device address. */
+const DEVICE_ADDRESS = /(?<![\w:-])[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}(?![\w:-])/g;
+/** The documented placeholders, compared with `-` read as `:`: the `AA:00:00:00:00:0n` family and the all-zero address. */
+const ADDRESS_PLACEHOLDER = /^(?:AA:00:00:00:00:0[0-9A-F]|00:00:00:00:00:00)$/;
+
+/** Swift sources under the SwiftPM package that tests and probes the shared core. */
+const CORE_TEST_ROOTS = [
+  "app/macos/CoreTests/Tests",
+  "app/macos/CoreTests/Probe",
+  "app/macos/CoreTests/Icon",
+  "app/macos/CoreTests/WidgetSnapshots",
+];
 
 interface ClassBlock {
   name: string;
@@ -153,7 +178,12 @@ export function checkCodeLayoutSync(): string[] {
     issues.push(...checkComments(relative(path), readFileSync(path, "utf-8"), COMMENTED_CODE_NATIVE));
   }
 
+  issues.push(...checkDeviceAddresses([
+    ...scriptPaths,
+    ...[...NATIVE_ROOTS, ...CORE_TEST_ROOTS].flatMap((root) => walk(join(projectRoot, root), NATIVE_EXTENSIONS)),
+  ]));
   issues.push(...checkWhitespaceHygiene());
+  issues.push(...checkEditMarkers());
 
   return issues;
 }
@@ -191,6 +221,42 @@ function hygieneFiles(): string[] {
     ...roots.flatMap((root) => walk(root, HYGIENE_EXTENSIONS)),
     ...singles.filter((path) => existsSync(path)),
   ];
+}
+
+/**
+ * A Bluetooth address in code is a real speaker, or a stand-in someone typed as if it
+ * were one — either way the code now depends on a device that is not in the tree.
+ * Device identity belongs to the probe's arguments, never to the source.
+ */
+function checkDeviceAddresses(paths: string[]): string[] {
+  const issues: string[] = [];
+  for (const path of paths) {
+    readFileSync(path, "utf-8").split("\n").forEach((line: string, index: number) => {
+      for (const match of line.matchAll(DEVICE_ADDRESS)) {
+        if (ADDRESS_PLACEHOLDER.test(match[0].toUpperCase().replaceAll("-", ":"))) continue;
+        issues.push(
+          `${relative(path)}:${index + 1}: Bluetooth address literal ${match[0]} — a hardcoded device; ` +
+            "use a documented placeholder (AA:00:00:00:00:01) or take the address from the probe's arguments",
+        );
+      }
+    });
+  }
+  return issues;
+}
+
+/** Edit flags left behind in any text asset the project owns. */
+function checkEditMarkers(): string[] {
+  const issues: string[] = [];
+  for (const path of hygieneFiles()) {
+    readFileSync(path, "utf-8").split("\n").forEach((line: string, index: number) => {
+      if (!EDIT_MARKER.test(line)) return;
+      issues.push(
+        `${relative(path)}:${index + 1}: edit flag left in the file — it only lets one edit through a write guard; ` +
+          "delete the line (it is not content, and it ships)",
+      );
+    });
+  }
+  return issues;
 }
 
 /**

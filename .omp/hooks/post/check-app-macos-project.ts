@@ -28,6 +28,20 @@
  *      Info.plist carries `NSBluetoothAlwaysUsageDescription` and a sandboxed
  *      app holds `com.apple.security.device.bluetooth`; without either the
  *      process is killed or the central never powers on.
+ *   7. One build location — Xcode (through the workspace's shared
+ *      WorkspaceSettings.xcsettings), every `xcodebuild` in the root Makefile
+ *      and the release builder all build into `app/macos/build/DerivedData.noindex`.
+ *      Xcode's default DerivedData is keyed by the repository's path, so every
+ *      move or clone left one more Roadie.app that Spotlight, Launchpad and the
+ *      widget gallery list beside the installed one; the `.noindex` suffix keeps
+ *      Spotlight out of the one that remains. ESLint ignores `macos/build/**`:
+ *      the build output holds generated and vendored JS that is not a source.
+ *   8. One registered copy, Metro first — `make run` probes Metro (`app-doctor.ts metro`,
+ *      port 8081) before the slow build (Debug loads its JS from Metro: without it the
+ *      window is empty), drops every other registered Roadie.app and the Release
+ *      widget registration (the widget host prefers a Release copy's higher
+ *      version over the Debug build being developed); `make clean` unregisters
+ *      every build copy before deleting it.
  *
  * Reads files only. Dormant (cause `absent`) while the project file does not exist.
  */
@@ -42,14 +56,12 @@ import { printRuleHint } from "../lib/hook-rule-hint.ts";
 import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
 import { touchesPath } from "../lib/hook-scope.ts";
 import { dormant, passLine } from "../lib/hook-dormancy.ts";
-import { resolveProjectRoot, WALK_EXCLUDES } from "../lib/hook-project-root.ts";
+import { projectRoot, WALK_EXCLUDES } from "../lib/hook-project-root.ts";
 import { APPLICATION, parseProject, plistArray, plistString, plistTrue, type Project } from "../lib/app-xcode-project.ts";
 
 // ============================================================
 // Constants
 // ============================================================
-
-const projectRoot = resolveProjectRoot();
 
 const MACOS_DIR = "app/macos";
 const PROJECT_FILE = "app/macos/MarshallBluetooth.xcodeproj/project.pbxproj";
@@ -59,6 +71,12 @@ const SHARED_DIR = "app/macos/Shared";
 
 const SOURCE_EXTENSIONS = [".swift", ".m"];
 
+/** The one directory every macOS build lands in (claim 7). */
+const DERIVED_DATA = "app/macos/build/DerivedData.noindex";
+const WORKSPACE_SETTINGS = "app/macos/MarshallBluetooth.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings";
+const RELEASE_BUILDER = ".omp/hooks/lib/app-release.ts";
+const ESLINT_CONFIG = "app/.eslintrc.js";
+
 // ============================================================
 // Functions
 // ============================================================
@@ -66,7 +84,7 @@ const SOURCE_EXTENSIONS = [".swift", ".m"];
 export default function checkAppMacosProject(pi: ExtensionAPI): void {
   pi.on("tool_result", (event: { toolName?: string; input?: Record<string, unknown>; content?: Array<{ type: string; text?: string }> }) => guarded("check-app-macos-project", event, () => {
     if (event.toolName && !MUTATING_TOOLS.has(event.toolName)) return;
-    if (!touchesPath(event, ["app/macos/"])) return;
+    if (!touchesPath(event, ["app/macos/", "Makefile", RELEASE_BUILDER, ESLINT_CONFIG])) return;
 
     const issues = checkAppMacosProjectSync();
     if (issues.length === 0) {
@@ -77,7 +95,7 @@ export default function checkAppMacosProject(pi: ExtensionAPI): void {
       event.toolName,
       "check-app-macos-project",
       issues,
-      "register sources in their target, sign with a team, keep App Group and names in agreement",
+      "register sources in their target, sign with a team, keep App Group and names in agreement, build only into app/macos/build/DerivedData.noindex",
     );
     if (warning === null) return;
     console.error(warning);
@@ -99,6 +117,8 @@ export function checkAppMacosProjectSync(): string[] {
   issues.push(...checkSigningAndGroups(project));
   issues.push(...checkIdentity(project));
   issues.push(...checkResidencyAndBluetooth(project));
+  issues.push(...checkBuildLocation());
+  issues.push(...checkRunAndCleanRecipes());
   return issues;
 }
 
@@ -257,6 +277,84 @@ function checkResidencyAndBluetooth(project: Project): string[] {
   return issues;
 }
 
+/** Claim 7: Xcode, the Makefile and the release builder share one DerivedData inside the project. */
+function checkBuildLocation(): string[] {
+  const issues: string[] = [];
+  const scattered = "Xcode then builds into ~/Library/Developer/Xcode/DerivedData/<path hash>, and each move or clone leaves another Roadie.app listed beside the installed one";
+  const settings = readProjectFile(WORKSPACE_SETTINGS);
+  if (settings === null) {
+    issues.push(`${WORKSPACE_SETTINGS}: missing — ${scattered}`);
+  } else if (
+    plistString(settings, "DerivedDataLocationStyle") !== "WorkspaceRelativePath" ||
+    plistString(settings, "DerivedDataCustomLocation") !== "build/DerivedData.noindex"
+  ) {
+    issues.push(`${WORKSPACE_SETTINGS}: DerivedData is not WorkspaceRelativePath build/DerivedData.noindex — ${scattered}`);
+  }
+
+  const makefile = readProjectFile("Makefile") ?? "";
+  makefile.split("\n").forEach((line, index) => {
+    if (!line.startsWith("\t")) return;
+    if (/\bxcodebuild\b/.test(line) && !/-showBuildSettings\b/.test(line) && !/-derivedDataPath\s+\S/.test(line)) {
+      issues.push(`Makefile:${index + 1}: xcodebuild without -derivedDataPath — ${scattered}`);
+    }
+    if (/react-native\s+run-macos\b/.test(line)) {
+      issues.push(`Makefile:${index + 1}: react-native run-macos builds into Xcode's default DerivedData — build with xcodebuild -derivedDataPath (make run)`);
+    }
+  });
+  if (makefile !== "" && !/^DERIVED_DATA\s*:?=\s*\$\(MACOS\)\/build\/DerivedData\.noindex\s*$/m.test(makefile)) {
+    issues.push(`Makefile: DERIVED_DATA is not $(MACOS)/build/DerivedData.noindex — Debug and Release builds must share ${DERIVED_DATA}`);
+  }
+
+  const release = readProjectFile(RELEASE_BUILDER);
+  if (release !== null && !release.includes(`const DERIVED_DATA = "${DERIVED_DATA}"`)) {
+    issues.push(`${RELEASE_BUILDER}: the Release build does not use ${DERIVED_DATA}`);
+  }
+
+  const eslint = readProjectFile(ESLINT_CONFIG);
+  if (eslint !== null && !/ignorePatterns:[^\]]*['"]macos\/build\/\*\*['"]/.test(eslint)) {
+    issues.push(`${ESLINT_CONFIG}: ignorePatterns omit 'macos/build/**' — eslint walks the DerivedData output (generated and vendored JS) as if it were source`);
+  }
+  return issues;
+}
+
+/** The recipe lines of a Makefile target: the tab-indented lines right below `target:`. */
+function recipeOf(makefile: string, target: string): string | null {
+  const lines = makefile.split("\n");
+  const start = lines.findIndex((line) => line.startsWith(`${target}:`));
+  if (start < 0) return null;
+  const recipe: string[] = [];
+  for (const line of lines.slice(start + 1)) {
+    if (!line.startsWith("\t")) break;
+    recipe.push(line);
+  }
+  return recipe.join("\n");
+}
+
+/** Claim 8: `make run` and `make clean` keep exactly one registered copy, and run needs Metro first. */
+function checkRunAndCleanRecipes(): string[] {
+  const issues: string[] = [];
+  const makefile = readProjectFile("Makefile") ?? "";
+  const run = recipeOf(makefile, "run");
+  if (run !== null) {
+    const metro = run.indexOf("app-doctor.ts metro");
+    const build = run.indexOf("$(MAKE) build");
+    if (metro < 0 || build < 0 || metro > build) {
+      issues.push("Makefile: `run` does not call `node .omp/hooks/lib/app-doctor.ts metro` (the Metro probe on port 8081) before `$(MAKE) build` — Debug loads its JS from Metro, so a missing Metro shows an empty window after a slow build");
+    }
+    if (!run.includes("app-registry.ts unregister-others")) {
+      issues.push("Makefile: `run` does not drop the other registered copies (node .omp/hooks/lib/app-registry.ts unregister-others) — the widget host and `open -b` pick a copy that is not the Debug build");
+    }
+    if (!/pluginkit -r [^\n]*Products\/Release\//.test(run)) {
+      issues.push("Makefile: `run` does not unregister the Release widget — the widget host prefers a Release copy's higher version over the Debug build");
+    }
+  }
+  const clean = recipeOf(makefile, "clean");
+  if (clean !== null && !clean.includes("app-registry.ts unregister-others")) {
+    issues.push("Makefile: `clean` deletes build copies without unregistering them (node .omp/hooks/lib/app-registry.ts unregister-others) — Launch Services keeps listing the deleted Roadie.app");
+  }
+  return issues;
+}
+
 // ============================================================
 // Helpers
 // ============================================================
@@ -289,7 +387,7 @@ if (typeof process !== "undefined" && process.argv[1]?.endsWith("check-app-macos
   const issues = checkAppMacosProjectSync();
   console.log("==> check-app-macos-project");
   if (issues.length === 0) {
-    console.log(passLine("check-app-macos-project", "Xcode project: sources, signing, App Group, names and residency agree"));
+    console.log(passLine("check-app-macos-project", "Xcode project: sources, signing, App Group, names, residency and build location agree"));
   } else {
     for (const issue of issues) {
       console.log(`    FAIL: ${issue}`);

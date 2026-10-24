@@ -103,7 +103,11 @@ with.
   byte layout or value range comes from a `make ble-probe` capture of a real
   speaker (`--raw` to watch values move as a knob turns, `--write` to confirm a
   value sticks) and is pinned in `CoreTests/Tests/` with the captured bytes. A
-  constant with no capture behind it is a guess the speaker will refuse.
+  constant with no capture behind it is a guess the speaker will refuse. The
+  same holds for a statement about what a device does, sends or supports: it
+  quotes the probe output that shows it, or is labelled unverified. An unknown
+  protocol is captured before a codec is written — a codec built on an assumed
+  layout is thrown away whole when the capture disagrees.
 - **A swap keeps the wrapper's shape.** `app/desktop/build.ts` (Windows/Linux)
   and `app/metro.config.js` (Android) replace `app/src/native/*` modules. Each
   replacement exists and exports every runtime name of the module it replaces,
@@ -116,6 +120,12 @@ with.
   exports: a second decoder or step rule drifts from the shared one, and the
   shared tests no longer cover it. The Swift half is held to the TypeScript one
   by rule://app-protocol-parity.
+- **The widget draws no AppKit-backed control.** `ProgressView`, `Toggle`,
+  `Slider`, `TextField` and `Picker` are bridged AppKit views: WidgetKit and
+  `ImageRenderer` cannot draw them, so the widget shows a placeholder and the
+  snapshots in `docs/` render the same empty box. Bars and switches are drawn
+  from shapes.
+
 ## Adding a Native Capability
 
 1. If the capability talks to the speaker, capture the characteristic with
@@ -135,7 +145,8 @@ with.
 ## Enforcement
 
 `check-app-native-boundary` (`make check-app-native-boundary`, part of
-`make verify`) checks the first seven conventions on code lines only — comments that
+`make verify`) checks every convention above except the measured device facts (those need
+hardware) on code lines only — comments that
 explain the boundary may name what it forbids. It is dormant (cause `absent`)
 while `app/macos/` does not exist.
 
@@ -149,3 +160,4 @@ while `app/macos/` does not exist.
 - Share app ↔ widget state through `UserDefaults(suiteName:)`
 - Define a method in a protocol extension that the protocol does not declare
 - Encode a device constant that no `make ble-probe` capture backs
+- Draw a `ProgressView`, `Toggle`, `Slider`, `TextField` or `Picker` in the widget

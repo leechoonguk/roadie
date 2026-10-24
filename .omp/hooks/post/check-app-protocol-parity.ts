@@ -29,13 +29,11 @@ import { printRuleHint } from "../lib/hook-rule-hint.ts";
 import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
 import { touchesPath } from "../lib/hook-scope.ts";
 import { dormant, passLine } from "../lib/hook-dormancy.ts";
-import { resolveProjectRoot } from "../lib/hook-project-root.ts";
+import { projectRoot } from "../lib/hook-project-root.ts";
 
 // ============================================================
 // Constants
 // ============================================================
-
-const projectRoot = resolveProjectRoot();
 
 const TS_PROTOCOL = "app/src/protocol.ts";
 const TS_CONTROLS = "app/src/controls.ts";

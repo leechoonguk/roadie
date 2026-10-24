@@ -8,6 +8,7 @@ import { buildSafeWarning, resetSuppression, wrapWarning } from "../lib/hook-saf
 import { guarded } from "../lib/hook-visibility.ts";
 import { printRuleHint } from "../lib/hook-rule-hint.ts";
 import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
+import { projectRoot } from "../lib/hook-project-root.ts";
 
 declare const process: {
   argv: string[];
@@ -31,11 +32,10 @@ declare const process: {
  * `enforced-by: []`, and must reference at least one `rule://` domain that
  * carries its enforcement instead.
  */
-const cwd = process.cwd();
-const skillsDir = join(cwd, ".omp", "skills");
-const catalogPath = join(cwd, ".omp", "rules", "omp-skills.md");
-const hooksPostDir = join(cwd, ".omp", "hooks", "post");
-const makefilePath = join(cwd, "Makefile");
+const skillsDir = join(projectRoot, ".omp", "skills");
+const catalogPath = join(projectRoot, ".omp", "rules", "omp-skills.md");
+const hooksPostDir = join(projectRoot, ".omp", "hooks", "post");
+const makefilePath = join(projectRoot, "Makefile");
 const CATALOG_HEADER = "| Skill | Trigger | Verification | Lifecycle (project metadata) |";
 
 /** Read-only tools never change skills or their catalog. */

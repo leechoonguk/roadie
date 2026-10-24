@@ -9,6 +9,7 @@
  * 파일까지 놓치지 않기 위해서다). `touchesStrict` 는 셸 명령 문자열까지 본다 — 자기 도메인이
  * 명령에 등장하지 않으면 건너뛴다. 하네스 메타 검사처럼 대상 경로가 좁고 확실할 때만 쓴다.
  */
+import { isInsideProject } from "./hook-project-root.ts";
 
 type HookEvent = { toolName?: string; input?: Record<string, unknown> };
 
@@ -24,17 +25,26 @@ function commandOf(event: HookEvent): string {
   return String(i.command ?? i.code ?? "");
 }
 
+/**
+ * 절대 경로가 이 프로젝트 밖(형제 프로젝트 등)이면 접두가 우연히 들어 있어도(`…/juice/app/macos/…`) 이
+ * 프로젝트 훅의 일이 아니다 — 부분 문자열 일치만으로 남의 파일에 이 프로젝트의 검사를 돌리지 않는다.
+ */
+function foreign(p: string): boolean {
+  return p.startsWith("/") && !isInsideProject(p.replace(/#[0-9A-Fa-f]{4}$/, ""));
+}
+
 /** 경로를 아는 이벤트만 거른다. 셸·경로 없는 이벤트는 항상 통과(보수적). */
 export function touchesPath(event: HookEvent, prefixes: string[]): boolean {
   const p = pathOf(event);
   if (!p) return true;
+  if (foreign(p)) return false;
   return prefixes.some((pre) => p.includes(pre));
 }
 
 /** 셸 명령 문자열까지 본다. 도메인이 어디에도 안 보이면 건너뛴다. */
 export function touchesStrict(event: HookEvent, prefixes: string[]): boolean {
   const p = pathOf(event);
-  if (p) return prefixes.some((pre) => p.includes(pre));
+  if (p) return !foreign(p) && prefixes.some((pre) => p.includes(pre));
   if (SHELL_TOOLS.has(String(event.toolName ?? ""))) {
     const c = commandOf(event);
     if (!c) return true;

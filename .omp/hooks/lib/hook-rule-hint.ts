@@ -7,6 +7,7 @@
 import { existsSync, readFileSync } from "node:fs";
 // @ts-expect-error — Node builtin, not project-compiled
 import { join } from "node:path";
+import { projectRoot } from "./hook-project-root.ts";
 
 /** Print the mapped rule (name + frontmatter description) for a failing check. */
 export function printRuleHint(hookName: string): void {
@@ -21,20 +22,21 @@ export function printRuleHint(hookName: string): void {
 export function ruleForHook(hookName: string): string | null {
   const base = hookName.replace(/^check-/, "");
   const candidate = RULE_NAME_EXCEPTIONS[base] ?? base;
-  const path = join(process.cwd(), ".omp", "rules", `${candidate}.md`);
+  const path = join(projectRoot, ".omp", "rules", `${candidate}.md`);
   try { if (existsSync(path)) return candidate; } catch { /* outside project cwd — omit */ }
   return null;
 }
 
 const RULE_NAME_EXCEPTIONS: Record<string, string> = {
   "omp-rules": "omp-conventions",
+  "omp-probes": "omp-hooks",
   "makefiles": "root-makefile",
   "readme": "root-readme",
 };
 
 function ruleDescription(rule: string): string | null {
   try {
-    const content = readFileSync(join(process.cwd(), ".omp", "rules", `${rule}.md`), "utf-8");
+    const content = readFileSync(join(projectRoot, ".omp", "rules", `${rule}.md`), "utf-8");
     const m = content.match(/^description:\s*(.+)$/m);
     return m ? m[1].trim() : null;
   } catch { return null; }

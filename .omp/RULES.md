@@ -15,6 +15,14 @@ own entries and blocks the command. Publish with `make commit m="…"` and
 
 When modifying the harness (`.omp/` files, hooks, rules, MCP/LSP config), always reference OMP official documentation (`omp://`) first. The harness is the backbone of your development workflow — changes here affect every session. Read `omp://` docs (settings, hooks, rules, tools, SDK) to understand current behavior before touching anything. Never guess how the harness works; verify against the official guide.
 
+## Language
+
+- Reply in the user's language; repository files keep the project's file language.
+
+## Environment
+
+- No global installs (brew, npm -g, pip) without asking; record what was installed; remove it when done and nothing else (never `brew autoremove`); never run an installer or setup against the real `$HOME` — use `HOME=$(mktemp -d)`; subagent prompts carry the same cleanup duty.
+
 ## Workflow
 
 Before creating or editing files in an area, read that area's rulebook entries
@@ -41,6 +49,10 @@ Verify by unit while working: `make test`, `make lint`, `make typecheck`,
 the full `make verify` during work — it runs once, at commit time, through
 `make commit`/`make push`. Before declaring work done, the unit checks covering
 the last change must be green.
+
+- After a write through anything but the edit tool (redirect, script), re-read before the next anchored edit; never `sed -i` code.
+- A reference the user names (a product, an app, a repo) is read or measured before the implementation it describes.
+- A user-visible fix names which copy the user runs (installed vs build) and installs it when asked.
 
 ## Working pattern
 

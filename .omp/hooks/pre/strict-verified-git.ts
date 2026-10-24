@@ -1,15 +1,17 @@
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+import { recordedBlocks } from "../lib/hook-metrics.ts";
 // @ts-expect-error — Node builtin, not project-compiled
 import { spawnSync } from "node:child_process";
-// @ts-expect-error — Node builtin, not project-compiled
-import { existsSync } from "node:fs";
-// @ts-expect-error — Node builtin, not project-compiled
-import { join } from "node:path";
+import { commandRunsOutsideProject, eventWithCwd, projectRoot } from "../lib/hook-project-root.ts";
 
-// 앵커에 인용부호(`"'`)와 백틱을 포함한다 — eval 본문에서는 명령이 문자열 리터럴 안에 있어
-// (execSync("git push …")) 셸 구분자만으로는 시작점을 못 잡는다(실측: eval 채널 무차단).
-const GIT_PUBLISH = /(?:^|[&|;()"'`]\s*)(?:sudo\s+)?git(?:\s+-\S+(?:\s+\S+)?)*\s+(?:commit|push)\b/;
-const GIT_COMMIT = /(?:^|[&|;()]\s*)(?:sudo\s+)?git(?:\s+-\S+(?:\s+\S+)?)*\s+commit\b/;
+/**
+ * Where a command starts. In a shell command, after a separator; in an eval body the command sits
+ * inside a string literal, so a quote also starts one there (measured: the eval channel went
+ * unblocked) — but not in bash, where a quoted mention of a publish command is prose.
+ */
+const SHELL_PUBLISH = /(?:^|[\n&|;()]\s*)(?:sudo\s+)?git(?:\s+-\S+(?:\s+\S+)?)*\s+(?:commit|push)\b/;
+const EVAL_PUBLISH = /(?:^|[\n&|;()"'\x60]\s*)(?:sudo\s+)?git(?:\s+-\S+(?:\s+\S+)?)*\s+(?:commit|push)\b/;
+const GIT_COMMIT = /(?:^|[\n&|;()]\s*)(?:sudo\s+)?git(?:\s+-\S+(?:\s+\S+)?)*\s+commit\b/;
 
 /**
  * Blocks OMP-mediated Git commits and pushes unless the current workspace passes
@@ -27,8 +29,8 @@ const GIT_COMMIT = /(?:^|[&|;()]\s*)(?:sudo\s+)?git(?:\s+-\S+(?:\s+\S+)?)*\s+com
  * (`git status --porcelain -- .`, from the repository root).
  */
 export default function strictVerifiedGit(pi: ExtensionAPI): void {
-  // ctx-ok: 커밋 검증은 작업 트리 경로(ctx.cwd)가 필요하다 — event 에 없고, 단순 문자열 읽기라 던질 수 없다.
-  pi.on("tool_call", (event: { toolName?: string; input?: Record<string, unknown> }, ctx: { cwd: string }) => {
+  // ctx-ok: the session cwd only says where the command runs (eventWithCwd reads it inside a try) — it is never a root.
+  pi.on("tool_call", recordedBlocks("strict-verified-git", (event: { toolName?: string; input?: Record<string, unknown> }, ctx: unknown) => {
     // channel: bash + eval — eval 본문의 execSync("git push") 는 bash 필터를 그대로 지나친다.
     if (event.toolName !== "bash" && event.toolName !== "eval") return;
 
@@ -40,10 +42,11 @@ export default function strictVerifiedGit(pi: ExtensionAPI): void {
       && /\b(execSync|exec|spawnSync|spawn|subprocess\.(?:run|call|check_call|Popen)|os\.system|popen)\b/.test(command)
       && /["'`]git["'`]/.test(command)
       && /["'`](commit|push)\b/.test(command);
-    if (!GIT_PUBLISH.test(command) && !evalPublish) return;
+    if (!(event.toolName === "eval" ? EVAL_PUBLISH : SHELL_PUBLISH).test(command) && !evalPublish) return;
+    // 형제 프로젝트에서 도는 명령은 그쪽 게이트의 일이다 — 이 프로젝트의 verify 로 막지 않는다.
+    if (commandRunsOutsideProject(event.input, eventWithCwd(event, ctx))) return;
 
     // Cheap first: a mismatched index makes the 25s verify irrelevant anyway.
-    const projectRoot = existsSync(join(ctx.cwd, "app", "macos")) ? ctx.cwd : join(ctx.cwd, "..");
     if (GIT_COMMIT.test(command)) {
       const mismatch = describeUncommittedWork(projectRoot);
       if (mismatch !== null) return { block: true, reason: mismatch };
@@ -61,7 +64,7 @@ export default function strictVerifiedGit(pi: ExtensionAPI): void {
         `make verify failed (exit ${result.status ?? "unknown"}); ` +
         "Git commit/push is blocked until verification passes.",
     };
-  });
+  }));
 }
 
 /**

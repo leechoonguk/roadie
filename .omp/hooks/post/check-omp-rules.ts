@@ -11,6 +11,7 @@ import { join } from "node:path";
 import { buildSafeWarning, wrapWarning, resetSuppression } from "../lib/hook-safety-guard.ts";
 import { guarded } from "../lib/hook-visibility.ts";
 import { printRuleHint } from "../lib/hook-rule-hint.ts";
+import { projectRoot } from "../lib/hook-project-root.ts";
 import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
 
 /**
@@ -34,8 +35,7 @@ import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
  * To add a rule: create .omp/rules/<scope>-<name>.md with frontmatter only.
  * To validate: run `make check-omp-rules` (part of `make verify`).
  */
-const cwd = process.cwd();
-const ompDir = join(cwd, ".omp");
+const ompDir = join(projectRoot, ".omp");
 const agentsPath = join(ompDir, "AGENTS.md");
 const rulesDir = join(ompDir, "rules");
 
@@ -217,7 +217,7 @@ function checkOmpRulesSync(): string[] {
     const content = readFileSync(join(rulesDir, file), "utf-8");
     const refRe = /`([\w./-]+\.(?:swift|m|ts|tsx|js|mjs|md|yml|yaml|json))`[^\n]{0,40}\breference\b[\s\S]{0,200}?```[a-z]*\n([\s\S]*?)```/g;
     for (const m of content.matchAll(refRe)) {
-      const realPath = join(cwd, m[1]);
+      const realPath = join(projectRoot, m[1]);
       if (!existsSync(realPath)) continue;
       const real = readFileSync(realPath, "utf-8").replace(/\s+/g, " ");
       for (const line of m[2].split("\n")) {
@@ -286,8 +286,8 @@ function checkProcedureSections(file: string, body: string): string[] {
 function checkNoDatedHistory(): string[] {
   const issues: string[] = [];
   const DATED = /\b20\d\d-\d\d-\d\d\b/;
-  const roots = ["rules", "hooks", "skills", "extensions"].map((dir) => join(cwd, ".omp", dir));
-  const singles = ["AGENTS.md", "RULES.md"].map((file) => join(cwd, ".omp", file));
+  const roots = ["rules", "hooks", "skills", "extensions"].map((dir) => join(projectRoot, ".omp", dir));
+  const singles = ["AGENTS.md", "RULES.md"].map((file) => join(projectRoot, ".omp", file));
   const walk = (dir: string): void => {
     let entries;
     try { entries = readdirSync(dir, { withFileTypes: true }); } catch { return; }
@@ -303,7 +303,7 @@ function checkNoDatedHistory(): string[] {
     lines.forEach((line: string, index: number) => {
       if (!DATED.test(line) || line.includes("history-ok")) return;
       issues.push(
-        `${full.slice(cwd.length + 1)}:${index + 1}: dated history in the harness — an incident's ` +
+        `${full.slice(projectRoot.length + 1)}:${index + 1}: dated history in the harness — an incident's ` +
           "date belongs in the commit message, not in a rule or hook; " +
           "state the invariant timelessly, or mark a deliberate format example with history-ok",
       );
@@ -425,11 +425,11 @@ function engineLiveness(
   keyOf: (s: string) => string,
 ): string[] {
   const issues: string[] = [];
-  const rulePath = join(cwd, ".omp", "rules", file);
+  const rulePath = join(projectRoot, ".omp", "rules", file);
   let ruleText: string;
   try { ruleText = readFileSync(rulePath, "utf-8"); } catch { return issues; }
   const hash = createHash("sha256").update(ruleText).digest("hex").slice(0, 16);
-  const cachePath = join(cwd, ".omp", "state", "ttsr-liveness-cache.json");
+  const cachePath = join(projectRoot, ".omp", "state", "ttsr-liveness-cache.json");
   let cache: Record<string, string[]> = {};
   try { cache = JSON.parse(readFileSync(cachePath, "utf-8")) as Record<string, string[]>; } catch { /* 첫 실행 */ }
   const cacheKey = `${file}@${hash}`;
@@ -472,7 +472,7 @@ function engineLiveness(
     }
   }
   cache[cacheKey] = issues;
-  try { mkdirSync(join(cwd, ".omp", "state"), { recursive: true }); writeFileSync(cachePath, JSON.stringify(cache)); } catch { /* 캐시 실패는 무해 */ }
+  try { mkdirSync(join(projectRoot, ".omp", "state"), { recursive: true }); writeFileSync(cachePath, JSON.stringify(cache)); } catch { /* 캐시 실패는 무해 */ }
   return issues;
 }
 
@@ -522,7 +522,7 @@ function checkTriggerScopeIsClean(file: string, condition: string, scope: string
       for (const [index, line] of lines.entries()) {
         if (!pattern.test(line)) continue;
         issues.push(
-          `${file}: condition already matches ${candidate.replace(`${cwd}/`, "")}:${index + 1} ` +
+          `${file}: condition already matches ${candidate.replace(`${projectRoot}/`, "")}:${index + 1} ` +
             `("${line.trim().slice(0, 48)}") — rewriting that line would interrupt the turn; ` +
             "narrow the regex or fix the code",
         );
@@ -537,7 +537,7 @@ function checkTriggerScopeIsClean(file: string, condition: string, scope: string
 function filesMatching(glob: string): string[] {
   const recursive = glob.includes("**");
   const extension = glob.slice(glob.lastIndexOf("."));
-  const base = join(cwd, glob.slice(0, glob.indexOf("*")).replace(/\/$/, ""));
+  const base = join(projectRoot, glob.slice(0, glob.indexOf("*")).replace(/\/$/, ""));
   if (!existsSync(base)) return [];
   const found: string[] = [];
   const walk = (dir: string): void => {

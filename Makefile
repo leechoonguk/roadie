@@ -1,8 +1,8 @@
-.PHONY: help install pods start run build relaunch app-logs typecheck lint test swift-check swift-test ble-probe app-icon demo widget-snapshots verify clean commit push \
+.PHONY: help install pods start run build app-logs typecheck lint test swift-check swift-test ble-probe app-icon demo widget-snapshots verify clean commit push \
 	desktop-install desktop-build desktop-start desktop-typecheck desktop-dist android-apk ios-pods ios-build \
-	dist release unrelease app-install \
+	dist release unrelease app-install doctor hook-report \
 	check-app-duplicate-blocks check-app-ios-project check-app-macos-project check-app-native-boundary check-app-protocol-parity check-code-layout check-makefiles \
-	check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-readme check-release check-tooling check-verify
+	check-omp-hooks check-omp-probes check-omp-rules check-omp-skills check-omp-types check-readme check-release check-tooling check-verify
 
 APP := app
 MACOS := $(APP)/macos
@@ -10,10 +10,15 @@ MACOS := $(APP)/macos
 DESKTOP := $(APP)/desktop
 SCHEME := MarshallBluetooth-macOS
 WORKSPACE := $(MACOS)/MarshallBluetooth.xcworkspace
-# The product the app target builds (its PRODUCT_NAME), and where Xcode put it.
-# Recursive (`=`) so the slow xcodebuild query runs only for the targets that use it.
+# Every macOS build — Debug here, Release in app-release.ts, Xcode's own through
+# the workspace's WorkspaceSettings.xcsettings — lands in this one directory. Xcode's
+# default DerivedData is keyed by the repository's path, so each move or clone
+# left another Roadie.app that Spotlight, Launchpad and the widget gallery list
+# beside the installed one; `.noindex` keeps Spotlight out of this one too
+# (rule://app-macos-project).
 APP_NAME := Roadie
-BUILT_APP = $(shell xcodebuild -workspace $(WORKSPACE) -scheme $(SCHEME) -configuration Debug -showBuildSettings 2>/dev/null | awk '$$1 == "BUILT_PRODUCTS_DIR" { print $$3; exit }')/$(APP_NAME).app
+DERIVED_DATA := $(MACOS)/build/DerivedData.noindex
+BUILT_APP := $(DERIVED_DATA)/Build/Products/Debug/$(APP_NAME).app
 
 # Swift sources that compile without React or CocoaPods. `swift-check` type-checks
 # them against the active SDK, which the Command Line Tools carry — so the native
@@ -40,16 +45,21 @@ pods: ## Install CocoaPods for the macOS app (requires Xcode)
 start: ## Start the Metro bundler
 	cd $(APP) && npx react-native start
 
-run: ## Build and launch the macOS app with its widget (requires Xcode)
-	cd $(APP) && npx react-native run-macos --scheme $(SCHEME)
-
-build: ## Build the macOS app and widget extension, Debug (requires Xcode)
-	xcodebuild -workspace $(WORKSPACE) -scheme $(SCHEME) -configuration Debug build
+build: ## Build the macOS app and widget extension, Debug, into app/macos/build/DerivedData.noindex (requires Xcode)
+	xcodebuild -workspace $(WORKSPACE) -scheme $(SCHEME) -configuration Debug -derivedDataPath $(DERIVED_DATA) build
 
 # A menu bar app keeps running, so a fresh build is not what runs until the old
-# process quits; the widget host caches the extension until it is re-registered.
-relaunch: build ## Rebuild, quit the running app, re-register the widget and relaunch (requires Xcode; Debug needs `make start`)
+# process quits; the widget host caches the extension until it is re-registered,
+# and prefers a Release copy (a higher version) over this build — so every other
+# registered Roadie.app and the Release widget are dropped first. Debug loads its
+# JS from Metro, so a missing Metro fails before the slow build, not as an empty window
+# (lib/app-doctor.ts `metro`, the same check `make doctor` reports).
+run: ## Build, quit the running app, drop other registered copies, re-register the widget and launch the build (requires Xcode; Debug needs `make start`)
+	node .omp/hooks/lib/app-doctor.ts metro
+	$(MAKE) build
 	-pkill -x $(APP_NAME)
+	-pluginkit -r "$(DERIVED_DATA)/Build/Products/Release/$(APP_NAME).app/Contents/PlugIns/MarshallWidget.appex"
+	node .omp/hooks/lib/app-registry.ts unregister-others "$(abspath $(BUILT_APP))"
 	pluginkit -a "$(BUILT_APP)/Contents/PlugIns/MarshallWidget.appex"
 	open "$(BUILT_APP)"
 	-killall chronod
@@ -119,11 +129,12 @@ ios-pods: ## Install CocoaPods for the iOS app (requires Xcode)
 	cd $(APP)/ios && pod install
 
 ios-build: ## Build the iOS app for the simulator, unsigned (requires Xcode and `make ios-pods`; a device build is signed in Xcode)
-	xcodebuild -workspace $(APP)/ios/MarshallBluetooth.xcworkspace -scheme MarshallBluetooth -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
+	xcodebuild -workspace $(APP)/ios/MarshallBluetooth.xcworkspace -scheme MarshallBluetooth -configuration Debug -sdk iphonesimulator -derivedDataPath $(APP)/ios/build/DerivedData CODE_SIGNING_ALLOWED=NO build
 
-verify: lint typecheck test swift-check swift-test check-app-duplicate-blocks check-app-ios-project check-app-macos-project check-app-native-boundary check-app-protocol-parity check-code-layout check-makefiles check-omp-hooks check-omp-rules check-omp-skills check-omp-types check-readme check-release check-tooling ## Run every gate that runs without Xcode
+verify: lint typecheck test swift-check swift-test check-app-duplicate-blocks check-app-ios-project check-app-macos-project check-app-native-boundary check-app-protocol-parity check-code-layout check-makefiles check-omp-hooks check-omp-probes check-omp-rules check-omp-skills check-omp-types check-readme check-release check-tooling ## Run every gate that runs without Xcode
 
-clean: ## Remove build output and caches
+clean: ## Remove build output and caches (every registered build copy is unregistered first, so nothing lists a deleted copy)
+	-node .omp/hooks/lib/app-registry.ts unregister-others
 	rm -rf $(MACOS)/build $(MACOS)/CoreTests/.build $(APP)/coverage
 	cd $(APP) && npx jest --clearCache >/dev/null
 
@@ -152,6 +163,12 @@ unrelease: ## Delete a GitHub release and its tag (usage: make unrelease v=vX.Y.
 app-install: ## Install the published release into /Applications as the only registered Roadie (build copies are unregistered)
 	node .omp/hooks/lib/app-release.ts install
 
+doctor: ## Report this Mac's registered Roadie copies, widget election, running processes, signing, toolchain and Metro (read-only; exits 1 on a problem)
+	node .omp/hooks/lib/app-doctor.ts
+
+hook-report: ## Report the pre-hook blocks (per hook, top reasons) and what the post hooks cost
+	node .omp/hooks/lib/hook-metrics.ts
+
 # Harness checks — one target per .omp/hooks/post/ hook (rule://root-makefile).
 # Every one is a `verify` prerequisite except check-verify, which runs `verify`.
 check-app-duplicate-blocks: ## Check app/ sources for duplicated block runs (stale rewrite + partial edits)
@@ -177,6 +194,9 @@ check-makefiles: ## Check Makefile targets against root-makefile.md and the post
 
 check-omp-hooks: ## Check .omp/hooks/ against omp-hooks.md and the hook contract
 	node .omp/hooks/post/check-omp-hooks.ts
+
+check-omp-probes: ## Check every pre hook's verdicts against the probe table (.omp/hooks/probes.json)
+	node .omp/hooks/post/check-omp-probes.ts
 
 check-omp-rules: ## Check .omp/rules/ frontmatter, naming and TTSR triggers
 	node .omp/hooks/post/check-omp-rules.ts

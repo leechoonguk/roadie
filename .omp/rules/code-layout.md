@@ -1,5 +1,5 @@
 ---
-description: Code layout for every language — comments, TypeScript file layout and class member order, whitespace
+description: Code layout for every language — comments, TypeScript file layout and class member order, whitespace, no edit flag left in a file, no device address literal in code
 globs:
       - app/*.js
       - app/*.tsx
@@ -86,6 +86,28 @@ edit.
 - **Spaces, not tabs** - the sole exception is a `Makefile` recipe, where a tab
   is the language.
 
+## No Edit Flag in a File (every text asset)
+
+The write guard (`strict-additive-writes`) lets a replacement through when the
+edit carries the line `// intent: replace` (`#` in YAML and Makefiles,
+`<!-- intent: replace -->` in Markdown). That line is an instruction to one edit,
+not content: a file that keeps it ships it — one such line stayed in a Swift file
+for a day. The guard asks for the flag only when the removed import, bridge
+declaration or registration is still referenced somewhere; a cutover that removed
+every reference first passes without it. If the flag is used, delete the line in
+a second edit. `check-code-layout` fails any text asset with a flag line (`//`,
+`#`, `<!-- -->` or a leading `*` before the words).
+
+## No Device Literals in Code
+
+A Bluetooth address — six hex bytes joined by `:` or `-` — in a TypeScript, Swift
+or Objective-C file is a real speaker, or a stand-in someone typed as if it were
+one; either way the code depends on a device that is not in the tree. Device
+identity comes from the probe's arguments (`make ble-probe ARGS="--target …"`),
+never from the source. The documented placeholders are allowed: the
+`AA:00:00:00:00:0n` family and `00:00:00:00:00:00`. `check-code-layout` fails every
+other literal on any code surface, tests included.
+
 ## Review Judgement (not machine-checked)
 
 A hook can see that a comment exists, never whether it earns its line. These are
@@ -104,3 +126,5 @@ review concerns, and a violation is a review comment, not a failing check:
 - Put a helper function above a file's `export default`
 - Leave trailing whitespace, a tab indent, a CRLF line, or a missing/duplicated
   final newline in any text asset
+- Leave the write guard's edit flag in a file after the edit that needed it
+- Write a Bluetooth address into code — use a documented placeholder or the probe's arguments

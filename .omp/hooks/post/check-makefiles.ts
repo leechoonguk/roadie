@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { buildSafeWarning, wrapWarning, resetSuppression } from "../lib/hook-safety-guard.ts";
 import { guarded } from "../lib/hook-visibility.ts";
 import { printRuleHint } from "../lib/hook-rule-hint.ts";
+import { projectRoot } from "../lib/hook-project-root.ts";
 import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
 
 /**
@@ -31,8 +32,7 @@ import { MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
  * This is a read-only check — it does NOT block tool calls.
  * To fix inconsistencies: update .PHONY, ## documentation, or target implementations.
  */
-const cwd = process.cwd();
-const ompDir = join(cwd, ".omp");
+const ompDir = join(projectRoot, ".omp");
 const rulesDir = join(ompDir, "rules");
 
 /**
@@ -59,8 +59,6 @@ const GATE_RUNNER = "check-verify";
  * 규칙·훅·확장·스킬의 make 참조를 Makefile 의 실타깃과 대조한다. "존재하지 않는다" 고
  * 경고하는 문장 자신은 제외한다.
  */
-const projectRoot = process.cwd();
-
 export function checkMakeTargetReferences(): string[] {
   const issues: string[] = [];
   const targetsOf = (rel: string): Set<string> => {
@@ -150,7 +148,7 @@ function checkMakefileConsistency(): string[] {
     const ruleContent = readFileSync(rulePath, "utf-8");
     const ruleTargets = parseMarkdownTable(ruleContent);
 
-    const makefilePathFull = join(cwd, makefilePath);
+    const makefilePathFull = join(projectRoot, makefilePath);
     if (!existsSync(makefilePathFull)) {
       issues.push(`${label}: Makefile ${makefilePath} not found`);
       continue;
@@ -187,6 +185,7 @@ function checkMakefileConsistency(): string[] {
     // skip the intended hook.
     issues.push(...checkTargetRecipes(makefilePathFull, label));
     issues.push(...checkTargetHelp(makefilePathFull, label));
+    issues.push(...helpMatchesRows(makefilePathFull, ruleContent));
   }
 
   issues.push(...checkMakeTargetReferences());
@@ -194,7 +193,7 @@ function checkMakefileConsistency(): string[] {
   // Check: Makefile targets that reference .ts/.sh files must point to
   // existing files. A missing file means the target silently fails.
   for (const { makefilePath, label } of makefileRules) {
-    const makefilePathFull = join(cwd, makefilePath);
+    const makefilePathFull = join(projectRoot, makefilePath);
     if (!existsSync(makefilePathFull)) continue;
     const content = readFileSync(makefilePathFull, "utf-8");
     const lines = content.split(/\r?\n/);
@@ -203,7 +202,7 @@ function checkMakefileConsistency(): string[] {
       const fileMatch = line.match(/(?:node|bash|\.\/)\s+(\S+\.(?:ts|sh|mjs))\b/);
       if (!fileMatch) continue;
       const refPath = fileMatch[1];
-      const fullPath = refPath.startsWith("./") ? join(cwd, refPath) : join(cwd, refPath);
+      const fullPath = refPath.startsWith("./") ? join(projectRoot, refPath) : join(projectRoot, refPath);
       if (!existsSync(fullPath)) {
         issues.push(`${label}: target references missing file '${refPath}'`);
       }
@@ -234,7 +233,7 @@ function checkMakefileConsistency(): string[] {
  */
 function checkVerifyMembership(): string[] {
   const issues: string[] = [];
-  const rootMakefilePath = join(cwd, "Makefile");
+  const rootMakefilePath = join(projectRoot, "Makefile");
   const rulePath = join(rulesDir, "root-makefile.md");
   if (!existsSync(rootMakefilePath) || !existsSync(rulePath)) return issues;
 
@@ -339,10 +338,53 @@ function checkTargetHelp(makefilePath: string, label: string): string[] {
   return issues;
 }
 
+/** `## help` text per target, as `make help` prints it. */
+function parseTargetHelp(makefilePath: string): Map<string, string> {
+  const help = new Map<string, string>();
+  for (const line of readFileSync(makefilePath, "utf-8").split(/\r?\n/)) {
+    const match = /^([A-Za-z0-9_-]+):(?!=)[^\n]*?##\s*(.+)$/.exec(line);
+    if (match !== null) help.set(match[1], match[2].trim());
+  }
+  return help;
+}
+
+/** The text before the first comma, semicolon, colon, parenthesis or dash. */
+function firstClause(text: string): string {
+  return text.split(/\s*(?:[,;:(]|\s[—-]\s)/)[0].trim();
+}
+
+/** Compared as words: case, backticks, emphasis and spacing do not count. */
+function words(text: string): string {
+  return text.replace(/[`*]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+/**
+ * A target has two descriptions — its `## help` text and the purpose cell of its row in
+ * root-makefile.md — and two descriptions drift (measured: a target was split in two, and the
+ * stale row passed because the check compared names only). The row's purpose must contain the
+ * help text's first clause; when it does not, both are named.
+ */
+function helpMatchesRows(makefilePath: string, ruleContent: string): string[] {
+  const issues: string[] = [];
+  const help = parseTargetHelp(makefilePath);
+  for (const row of ruleContent.split(/\r?\n/)) {
+    const match = /^\|\s*`make ([\w-]+)[^`]*`\s*\|/.exec(row.trim());
+    if (match === null) continue;
+    const text = help.get(match[1]);
+    if (text === undefined || text === "") continue;
+    const purpose = row.trim().replace(/\|\s*$/, "").split(/(?<!\\)\|/).pop() ?? "";
+    const clause = firstClause(text);
+    if (!words(purpose).includes(words(clause))) {
+      issues.push(`root-makefile.md: the row for 'make ${match[1]}' does not contain the help text's first clause — help: "${clause}"; row: "${purpose.trim()}"`);
+    }
+  }
+  return issues;
+}
+
 function checkHooksRegisteredInMakefile(): string[] {
   const issues: string[] = [];
   const postHooksDir = join(ompDir, "hooks", "post");
-  const rootMakefilePath = join(cwd, "Makefile");
+  const rootMakefilePath = join(projectRoot, "Makefile");
 
   if (!existsSync(postHooksDir)) {
     issues.push(".omp/hooks/post/ directory not found");

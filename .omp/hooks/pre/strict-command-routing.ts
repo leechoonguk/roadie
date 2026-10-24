@@ -1,4 +1,6 @@
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+import { recordedBlocks } from "../lib/hook-metrics.ts";
+import { commandRunsOutsideProject, eventWithCwd } from "../lib/hook-project-root.ts";
 
 /**
  * Strict-Command-Routing Pre Hook
@@ -34,13 +36,16 @@ const FULL_GATE = /\bmake\b[^|;&]*\b(?:verify|test)\b(?!-fast)/;
 const GATE_TRUNCATION = /\|\s*(?:tail|head|grep|sed|awk|wc)\b/;
 
 export default function strictCommandRouting(pi: ExtensionAPI): void {
-  pi.on("tool_call", (event: { toolName?: string; input?: Record<string, unknown> }) => {
+  // ctx-ok: the session cwd only locates a relative path (eventWithCwd reads it inside a try) — it is never a root.
+  pi.on("tool_call", recordedBlocks("strict-command-routing", (event: { toolName?: string; input?: Record<string, unknown> }, ctx: unknown) => {
     // 실행 채널은 셋이다: bash, eval(파이썬/JS 본문에서 subprocess.run·execSync), hub(op:start).
     // bash 만 보면 전수 점검 기준 32% 가 샌다(차단 185 vs 우회 87).
     const tool = String(event.toolName ?? "");
     if (!/^(bash|eval)$/.test(tool)) return;
 
     const cmd = String(event.input?.command ?? event.input?.code ?? "");
+    // 형제 프로젝트에서 도는 명령은 그쪽 라우팅의 일이다 — 이 프로젝트의 make 타깃을 강요하지 않는다.
+    if (commandRunsOutsideProject(event.input, eventWithCwd(event, ctx))) return;
 
     // eval 본문에서는 라우팅 대상이 인용부호 안에 들어간다(`execSync("npx jest")`) — 셸용
     // 패턴이 못 잡는다. 전수 점검: eval 로 85건/25세션이 우회했다. 실행 함수 + 대상 도구가
@@ -63,14 +68,16 @@ export default function strictCommandRouting(pi: ExtensionAPI): void {
     // 그대로 통과시켰고, 그래서 이 두 실패가 같은 세션에서 동시에 일어났다: 파이프의
     // 종료코드가 게이트의 것을 덮어 빨간 게이트가 초록으로 읽히고, 마감 게이트는 잘린
     // 실행을 검증으로 세지 않아 답변마다 "make verify 를 돌려라" 를 되풀이한다.
-    if (FULL_GATE.test(cmd) && GATE_TRUNCATION.test(cmd)) {
+    if (truncatesGate(cmd)) {
       return {
         block: true,
         reason:
           "게이트 출력을 파이프로 자르지 않는다 — `make verify | tail` 은 tail 의 종료코드를 " +
           "돌려주므로 빨간 게이트가 초록으로 보이고, 세션의 마감 게이트도 잘린 실행을 " +
-          "검증으로 세지 않아 같은 요구가 반복된다.\n\n  → `make verify` 를 그대로 실행하세요" +
-          "(출력이 길면 결과가 artifact 로 남는다).",
+          "검증으로 세지 않아 같은 요구가 반복된다.\n\n  → 허용되는 형태 둘:\n" +
+          "    1) `make verify` 를 그대로 실행하세요(출력이 길면 결과가 artifact:// 로 남으니 그것을 읽는다).\n" +
+          "    2) `make verify > /tmp/verify.log 2>&1; echo EXIT=$?` — 출력은 파일로, 종료코드는 따로 읽는다" +
+          "(`make <target>` 모두 같은 형태).",
       };
     }
 
@@ -86,7 +93,19 @@ export default function strictCommandRouting(pi: ExtensionAPI): void {
         };
       }
     }
-  });
+  }));
+}
+
+/**
+ * The gate's own command segment (up to the next `;`, `&&`, `||` or newline). A gate that
+ * redirects its output to a file (`make verify > out 2>&1; echo EXIT=$?`) is not truncated
+ * by what the shell does with that file afterwards, and the exit code is read on its own.
+ */
+function truncatesGate(cmd: string): boolean {
+  const gate = FULL_GATE.exec(cmd);
+  if (gate === null) return false;
+  const segment = cmd.slice(gate.index).split(/;|\|\||&&|\n/)[0];
+  return GATE_TRUNCATION.test(segment) && !/(?:^|\s)\d?>>?\s*[^\s&>]/.test(segment.split(/\|/)[0]);
 }
 
 /**

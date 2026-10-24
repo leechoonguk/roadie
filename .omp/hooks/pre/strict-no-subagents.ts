@@ -1,4 +1,5 @@
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+import { recordedBlocks } from "../lib/hook-metrics.ts";
 
 /**
  * Strict-No-Subagents Pre Hook
@@ -28,11 +29,11 @@ const BLOCK_REASON =
 export default function strictNoSubagents(pi: ExtensionAPI): void {
   // ctx-ok: 세션 모델의 provider 는 ctx(models.current / model)에만 있다 — event 에는 없다.
   // onLocalModel 은 모든 접근을 typeof/in 가드로 감싸 던질 수 없다(가드 실패는 false).
-  pi.on("tool_call", (event: { toolName?: string }, ctx: unknown) => {
+  pi.on("tool_call", recordedBlocks("strict-no-subagents", (event: { toolName?: string }, ctx: unknown) => {
     if (event.toolName !== "task") return;
     if (!onLocalModel(ctx)) return;
     return { block: true, reason: BLOCK_REASON };
-  });
+  }));
 
   pi.on("before_subagent_spawn", (_event: unknown, ctx: unknown) => {
     if (onLocalModel(ctx)) return { block: true, reason: BLOCK_REASON };

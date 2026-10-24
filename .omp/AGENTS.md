@@ -17,8 +17,8 @@ rest, held to each other by rule://app-protocol-parity; the layers and swaps
 are rule://app-native-boundary. `README.md` at the project root is the
 front page; its pictures in `docs/` are made from the app (rule://root-readme).
 
-The `make verify` gate runs without Xcode; `make build`, `make relaunch`,
-`make run` and `make pods` need it (rule://app-macos-project, "Running on This
+The `make verify` gate runs without Xcode; `make build`, `make run` and
+`make pods` need it (rule://app-macos-project, "Running on This
 Mac"). Native logic lives in React-free Swift so the gate still compiles and
 tests it.
 
@@ -76,15 +76,27 @@ project directory.
 |---|---|
 | Install | `make install` (app, CocoaPods for macOS), `make desktop-install`, `make ios-pods` |
 | Unit gates while working | `make lint`, `make typecheck`, `make test`, `make swift-check`, `make swift-test`, `make desktop-typecheck` |
-| Run the app as built (Xcode) | `make start` once, then `make relaunch`; `make app-logs` to follow widget → app |
+| Run the app as built (Xcode) | `make start` once, then `make run` (fails fast without Metro; drops every other registered copy); `make app-logs` to follow widget → app |
+| What this Mac believes about Roadie | `make doctor` — registered copies, the widget host's choice, running processes, signing identity, WWDR G3, `xcode-select`, Metro (read-only, fail-loud) |
 | Windows/Linux app | `make desktop-start`; installers with `make desktop-dist v=x.y.z` (this OS only — CI builds both) |
 | Android APK, iOS build | `make android-apk v=x.y.z` (Android SDK, JDK 17); `make ios-build` (Xcode, simulator) |
 | The README's pictures | `make demo` (desktop recording), `make widget-snapshots` (macOS; CI renders them too) |
-| Talk to the speaker without the app | `make ble-probe ARGS="--target ACTON --raw"` |
+| Talk to the speaker without the app | `make ble-probe ARGS="--target ACTON --raw"` — the only evidence for a claim about what the speaker does, sends or supports |
 | Release (only when asked) | `make release bump=patch\|minor\|major` (`DRY_RUN=1` first); `make app-install` puts the published Mac build in /Applications |
 | One harness check | `make check-<name>` (listed by `make help`) |
-| The whole gate | `make verify` — runs once, at commit, through `make commit` |
+| What the harness blocked | `make hook-report` — the pre-hook blocks per hook and the top reasons (`.omp/state/hook-metrics.jsonl`) |
+| The whole gate | `make verify` — runs once, at commit, through `make commit`; run it bare and read the `artifact://` it leaves (or `make verify > /tmp/verify.log 2>&1; echo EXIT=$?`) — never pipe it into `tail`/`grep` |
 | Publish (only when asked) | `make commit m="type(scope): subject"`, `make push` |
+
+## Measure Before You Claim
+
+A statement about what the speaker does, sends or supports needs the probe
+output that shows it (`make ble-probe`), quoted in the answer or pinned as a
+test fixture in `CoreTests/Tests/`; otherwise it is labelled **unverified**. An
+unknown protocol is captured before a codec is written — a codec written from an
+assumption is thrown away whole when the capture disagrees. A real device address
+never appears in the tree: use a documented placeholder (`AA:00:00:00:00:0n`) or
+the probe's arguments (`check-code-layout` rejects the literal).
 
 ## Rules (`.omp/rules/`)
 

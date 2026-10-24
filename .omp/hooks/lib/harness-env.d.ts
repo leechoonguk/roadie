@@ -59,3 +59,12 @@ declare type ExtensionAPI = HostExtensionApi;
 declare module "@oh-my-pi/pi-coding-agent" {
   export type ExtensionAPI = HostExtensionApi;
 }
+
+/** The one module-metadata field the harness reads: where a hook file lives. */
+interface ImportMeta {
+  readonly url: string;
+}
+
+declare class URL {
+  constructor(input: string, base?: string);
+}

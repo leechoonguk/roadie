@@ -10,6 +10,7 @@ import { buildSafeWarning, resetSuppression, wrapWarning } from "../lib/hook-saf
 import { guarded } from "../lib/hook-visibility.ts";
 import { printRuleHint } from "../lib/hook-rule-hint.ts";
 import { MUTATING_TOOLS_NO_BASH as MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
+import { projectRoot } from "../lib/hook-project-root.ts";
 
 /**
  * Check-Omp-Types Post Hook
@@ -25,9 +26,6 @@ import { MUTATING_TOOLS_NO_BASH as MUTATING_TOOLS } from "../lib/hook-mutating-t
  *
  * This is a read-only check — it does NOT block tool calls.
  */
-const cwd = process.cwd();
-const projectRoot = existsSync(join(cwd, ".omp", "tsconfig.json")) ? cwd : join(cwd, "..");
-
 /** Type-checking the harness costs seconds, so it is throttled like `check-verify`. */
 const THROTTLE_MS = 60 * 1000;
 const FAILURE_THROTTLE_MS = 10 * 1000;

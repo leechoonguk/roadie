@@ -28,7 +28,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, sym
 import { join } from "node:path";
 // @ts-expect-error — Node builtin, not project-compiled
 import { tmpdir } from "node:os";
-import { resolveProjectRoot } from "./hook-project-root.ts";
+import { projectRoot } from "./hook-project-root.ts";
+import { INSTALLED_APP, LSREGISTER, unregisterOthers } from "./app-registry.ts";
 
 declare const process: { argv: string[]; exit(code?: number): never; env: Record<string, string | undefined> };
 
@@ -65,19 +66,37 @@ export function releaseAssets(version: string): string[] {
 const WORKSPACE = "app/macos/MarshallBluetooth.xcworkspace";
 const SCHEME = "MarshallBluetooth-macOS";
 const APP_PLIST = "app/macos/MarshallBluetooth-macOS/Info.plist";
-const DERIVED_DATA = "app/macos/build/DerivedData";
+const DERIVED_DATA = "app/macos/build/DerivedData.noindex";
 const DIST_DIR = "app/macos/build/dist";
 const BUILT_APP = `${DERIVED_DATA}/Build/Products/Release/Roadie.app`;
 const MINIMUM_SYSTEM = "14.0";
 const VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 /** Commit subjects left out of release notes: they change nothing a user sees. */
 const NOTE_EXCLUDE = /^(docs|test|chore\(harness\))(\(|:)/;
-/** Where the one copy of Roadie lives; Sparkle replaces this bundle in place. */
-const INSTALLED_APP = "/Applications/Roadie.app";
-const LSREGISTER =
-  "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister";
 
-const root = resolveProjectRoot();
+/**
+ * The README's pictures and what draws them: the demo recording is the desktop app's React screens
+ * (and the in-memory speaker) driven by `app/desktop/demo.ts`; the widget pictures are the widget's
+ * own SwiftUI views rendered by the snapshot tool. A source from the list changing while none of its
+ * pictures did leaves the front page showing something the release no longer draws.
+ */
+const PICTURES: Array<{ files: string[]; drawnBy: string[]; remake: string }> = [
+  {
+    files: ["docs/demo.gif"],
+    drawnBy: [
+      "app/src/screens", "app/src/components", "app/src/theme.ts", "app/src/controls.ts", "app/src/devices.ts", "app/src/protocol.ts",
+      "app/desktop/demo.ts", "app/desktop/src/demo", "app/desktop/src/renderer",
+    ],
+    remake: "make demo",
+  },
+  {
+    files: ["docs/widgets-light.png", "docs/widgets-dark.png"],
+    drawnBy: ["app/macos/MarshallWidget", "app/macos/Shared", "app/macos/CoreTests/WidgetSnapshots"],
+    remake: "make widget-snapshots",
+  },
+];
+
+const root = projectRoot;
 
 // ============================================================
 // Commands
@@ -126,6 +145,7 @@ export function release(bump: string | undefined, dryRun: boolean): void {
   if (spawnSync("gh", ["auth", "status"], { cwd: root, stdio: "ignore" }).status !== 0) {
     fail("gh (GitHub CLI) is missing or not logged in (gh auth login)");
   }
+  requirePublicRepository();
 
   // 1. The commit may be released.
   const branch = output("git", ["rev-parse", "--abbrev-ref", "HEAD"]).trim();
@@ -152,6 +172,7 @@ export function release(bump: string | undefined, dryRun: boolean): void {
   const notes = releaseNotes(last === "v0.0.0" ? null : last);
   say(`${last} -> ${tag} (${bump})`);
   console.log(notes);
+  if (last !== "v0.0.0") staleDemoNote(last);
   if (dryRun) {
     say("dry run: nothing built, tagged or published");
     return;
@@ -178,13 +199,6 @@ export function release(bump: string | undefined, dryRun: boolean): void {
   if (!feed.includes(`<sparkle:version>${next}</sparkle:version>`)) {
     fail(`the latest release's ${FEED_ASSET} does not name ${next} — installed copies still see the previous release`);
   }
-  const visibility = output("gh", ["repo", "view", RELEASE_REPO, "--json", "visibility", "--jq", ".visibility"]).trim();
-  if (visibility !== "PUBLIC") {
-    say(
-      `warning: ${RELEASE_REPO} is ${visibility.toLowerCase()} — installed copies download without logging in, ` +
-        `so none can fetch ${FEED_URL} or this release until the repository is public`,
-    );
-  }
   say(`released ${tag}: https://github.com/${RELEASE_REPO}/releases/tag/${tag}`);
 }
 
@@ -201,7 +215,7 @@ export function unrelease(tag: string | undefined): void {
  * and makes it the only Roadie macOS knows: build copies are unregistered from
  * LaunchServices and the widget host, so the widget, Spotlight and `open -b` all
  * reach `/Applications`. Downloads through `gh`, which also reaches a private
- * repository. Development builds stay on disk; `make relaunch` registers one again.
+ * repository. Development builds stay on disk; `make run` registers one again.
  */
 export function install(): void {
   const work = mkdtempSync(join(tmpdir(), "roadie-install-"));
@@ -219,11 +233,7 @@ export function install(): void {
     run("codesign", ["--verify", "--deep", "--strict", join(mount, "Roadie.app")]);
 
     spawnSync("pkill", ["-x", "Roadie"], { stdio: "ignore" });
-    for (const copy of buildCopies()) {
-      spawnSync("pluginkit", ["-r", `${copy}/Contents/PlugIns/MarshallWidget.appex`], { stdio: "ignore" });
-      spawnSync(LSREGISTER, ["-u", copy], { stdio: "ignore" });
-      say(`unregistered ${copy}`);
-    }
+    for (const copy of unregisterOthers([])) say(`unregistered ${copy.app}`);
     rmSync(INSTALLED_APP, { recursive: true, force: true });
     run("ditto", [join(mount, "Roadie.app"), INSTALLED_APP]);
     run(LSREGISTER, ["-f", INSTALLED_APP]);
@@ -282,11 +292,20 @@ function signingIdentity(): string {
   return identity;
 }
 
-/** Roadie bundles Spotlight finds in a build directory (Xcode's DerivedData or this project's build/). */
-function buildCopies(): string[] {
-  return output("mdfind", ["kMDItemCFBundleIdentifier == 'com.uk.marshallbluetooth'"])
-    .split("\n")
-    .filter((path) => path.endsWith(".app") && (path.includes("/DerivedData/") || path.startsWith(join(root, "app/macos/build"))));
+/**
+ * Installed copies download the feed and the archive without logging in, so a release in a
+ * private repository is a release none of them can reach (`releases/latest/download/…` is a 404
+ * for them). Checked before anything is tagged or built.
+ */
+function requirePublicRepository(): void {
+  const visibility = output("gh", ["repo", "view", RELEASE_REPO, "--json", "visibility", "--jq", ".visibility"]).trim();
+  if (visibility !== "PUBLIC") {
+    fail(
+      `${RELEASE_REPO} is ${visibility.toLowerCase()} — installed copies download ${FEED_URL} without logging in, so a release ` +
+        "published from it is unreachable (404) for every installed copy; make the repository public first " +
+        `(gh repo edit ${RELEASE_REPO} --visibility public --accept-visibility-change-consequences)`,
+    );
+  }
 }
 
 /** The single-item Sparkle feed for `version`. */
@@ -321,6 +340,21 @@ function releaseNotes(last: string | null): string {
     .split("\n")
     .filter((subject) => subject !== "" && !NOTE_EXCLUDE.test(subject));
   return subjects.length === 0 ? "Maintenance release." : subjects.map((subject) => `- ${subject}`).join("\n");
+}
+
+/**
+ * The README's pictures are re-recorded by hand (`make demo`, `make widget-snapshots`): note, do
+ * not block, when what draws a picture changed since `last` and the picture did not — the front page
+ * would show a screen or a widget the release no longer draws (rule://root-readme).
+ */
+function staleDemoNote(last: string): void {
+  const changed = (paths: string[]): boolean =>
+    spawnSync("git", ["diff", "--quiet", last, "HEAD", "--", ...paths], { cwd: root }).status === 1;
+  for (const picture of PICTURES) {
+    if (!changed(picture.drawnBy) || changed(picture.files)) continue;
+    say(`note: what draws ${picture.files.join(", ")} changed since ${last}, the picture did not;`);
+    say(`      if it looks different now, run ${picture.remake}, look at the result, and commit it first`);
+  }
 }
 
 function keychainPublicKey(): string {

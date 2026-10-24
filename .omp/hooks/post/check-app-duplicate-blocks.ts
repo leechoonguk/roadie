@@ -17,10 +17,9 @@ import { FILE_EDIT_TOOLS } from "../lib/hook-mutating-tools.ts";
 import { writtenPaths } from "../lib/hook-tool-paths.ts";
 import { checkFileForDuplicates, scanTree } from "../lib/app-duplicate-blocks.ts";
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
-import { resolveProjectRoot } from "../lib/hook-project-root.ts";
+import { isInsideProject, projectRoot } from "../lib/hook-project-root.ts";
 import { touchesPath } from "../lib/hook-scope.ts";
 
-const projectRoot = resolveProjectRoot();
 // 파일을 쓰는 툴만 본다(bash 는 writtenPaths 가 어차피 빈 배열) — read-only 필터 계약상 이름은 MUTATING_TOOLS.
 const MUTATING_TOOLS = new Set<string>(FILE_EDIT_TOOLS);
 
@@ -31,7 +30,7 @@ export default function checkAppDuplicateBlocks(pi: ExtensionAPI): void {
     if (!touchesPath(event, ["app/"])) return;
     const issues: string[] = [];
     for (const p of writtenPaths(String(event.toolName ?? ""), event.input ?? {})) {
-      if (!p.includes("app/")) continue;
+      if (!p.includes("app/") || (isAbsolute(p) && !isInsideProject(p))) continue;
       const abs = isAbsolute(p) ? p : join(projectRoot, p);
       const display = isAbsolute(p) ? relative(projectRoot, p) : p;
       issues.push(...checkFileForDuplicates(abs, display));

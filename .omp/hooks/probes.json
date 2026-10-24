@@ -1,0 +1,236 @@
+[
+  {
+    "name": "mention: a release command quoted in prose does not run",
+    "hook": "strict-release-route",
+    "tool": "bash",
+    "input": { "command": "echo \"git tag v1.2.3 is listed\"" },
+    "expect": "allow"
+  },
+  {
+    "name": "mention: a gate-routed tool quoted in prose does not run",
+    "hook": "strict-command-routing",
+    "tool": "bash",
+    "input": { "command": "echo \"npx jest is blocked\"" },
+    "expect": "allow"
+  },
+  {
+    "name": "mention: a publish command quoted in prose does not run",
+    "hook": "strict-publish-consent",
+    "tool": "bash",
+    "input": { "command": "echo \"git push is listed\"" },
+    "turn": "show me the diff",
+    "expect": "allow"
+  },
+  {
+    "name": "mention: a commit quoted in prose does not run the gate",
+    "hook": "strict-verified-git",
+    "tool": "bash",
+    "input": { "command": "echo \"git commit is listed\"" },
+    "expect": "allow"
+  },
+  {
+    "name": "dry-run: make release with DRY_RUN=1 publishes nothing",
+    "hook": "strict-publish-consent",
+    "tool": "bash",
+    "input": { "command": "make release bump=patch DRY_RUN=1" },
+    "turn": "show me the plan",
+    "expect": "allow"
+  },
+  {
+    "name": "release-without-consent: make release needs the user's request",
+    "hook": "strict-publish-consent",
+    "tool": "bash",
+    "input": { "command": "make release bump=patch" },
+    "turn": "show me the plan",
+    "expect": "block"
+  },
+  {
+    "name": "commit-without-consent: git commit needs the user's request",
+    "hook": "strict-publish-consent",
+    "tool": "bash",
+    "input": { "command": "git commit -m wip" },
+    "turn": "looks good",
+    "expect": "block"
+  },
+  {
+    "name": "commit-with-consent: an asked-for commit passes the consent gate",
+    "hook": "strict-publish-consent",
+    "tool": "bash",
+    "input": { "command": "make commit m=\"fix: x\"" },
+    "turn": "please commit this",
+    "expect": "allow"
+  },
+  {
+    "name": "sibling-path: a script path in a sibling project is not this project's policy",
+    "hook": "strict-tooling",
+    "tool": "write",
+    "input": { "path": "/tmp/sibling-project/scripts/run.py", "content": "print(1)\n" },
+    "expect": "allow"
+  },
+  {
+    "name": "sibling-path: an edit of a sibling project's file is not this project's guard",
+    "hook": "strict-additive-writes",
+    "tool": "edit",
+    "input": { "path": "/tmp/sibling-project/app/App.tsx", "input": "PUT 1.=1:\n+import x from \"x\"\n" },
+    "expect": "allow"
+  },
+  {
+    "name": "script-in-project: a Python script at the project root is blocked",
+    "hook": "strict-tooling",
+    "tool": "write",
+    "input": { "path": "scripts/run.py", "content": "print(1)\n" },
+    "expect": "block"
+  },
+  {
+    "name": "sibling-cwd: a relative script path resolves against the call's own cwd",
+    "hook": "strict-tooling",
+    "tool": "write",
+    "input": { "path": "scripts/run.py", "content": "print(1)\n" },
+    "cwd": "/tmp/sibling-project",
+    "expect": "allow"
+  },
+  {
+    "name": "sibling-cwd: a gate-routed tool run in a sibling project is that project's routing",
+    "hook": "strict-command-routing",
+    "tool": "bash",
+    "input": { "command": "npx jest" },
+    "cwd": "/tmp/sibling-project",
+    "expect": "allow"
+  },
+  {
+    "name": "sibling-cwd: a release command run in a sibling project is that project's route",
+    "hook": "strict-release-route",
+    "tool": "bash",
+    "input": { "command": "git tag v1.2.3" },
+    "cwd": "/tmp/sibling-project",
+    "expect": "allow"
+  },
+  {
+    "name": "sibling-cwd: a commit made in a sibling project is not gated by this project's verify",
+    "hook": "strict-verified-git",
+    "tool": "bash",
+    "input": { "command": "git commit -m wip" },
+    "cwd": "/tmp/sibling-project",
+    "expect": "allow"
+  },
+  {
+    "name": "sibling-cwd: a truncating redirect in a sibling project is not this project's guard",
+    "hook": "strict-additive-writes",
+    "tool": "bash",
+    "input": { "command": "echo x > .omp/hooks/pre/strict-tooling.ts" },
+    "cwd": "/tmp/sibling-project",
+    "expect": "allow"
+  },
+  {
+    "name": "truncating-redirect: a redirect that wipes an existing source file is blocked",
+    "hook": "strict-additive-writes",
+    "tool": "bash",
+    "input": { "command": "echo x > .omp/hooks/pre/strict-tooling.ts" },
+    "expect": "block"
+  },
+  {
+    "name": "gate-redirect: the gate redirected to a file, exit code read after",
+    "hook": "strict-command-routing",
+    "tool": "bash",
+    "input": { "command": "make verify > /tmp/verify.log 2>&1; echo EXIT=$?" },
+    "expect": "allow"
+  },
+  {
+    "name": "gate-redirect: a filter that reads the log afterwards is not the gate's pipe",
+    "hook": "strict-command-routing",
+    "tool": "bash",
+    "input": { "command": "make verify > /tmp/verify.log 2>&1; echo EXIT=$?; grep FAIL /tmp/verify.log | tail -5" },
+    "expect": "allow"
+  },
+  {
+    "name": "gate-piped: the gate's own output piped to a filter",
+    "hook": "strict-command-routing",
+    "tool": "bash",
+    "input": { "command": "make verify | tail -5" },
+    "expect": "block"
+  },
+  {
+    "name": "gate-piped: 2>&1 is not a file redirect, so the pipe still truncates the gate",
+    "hook": "strict-command-routing",
+    "tool": "bash",
+    "input": { "command": "make test 2>&1 | grep -c ok" },
+    "expect": "block"
+  },
+  {
+    "name": "direct-tool: npx tsc is routed to make typecheck",
+    "hook": "strict-command-routing",
+    "tool": "bash",
+    "input": { "command": "npx tsc --noEmit" },
+    "expect": "block"
+  },
+  {
+    "name": "release-write: a raw git tag write is routed to make release",
+    "hook": "strict-release-route",
+    "tool": "bash",
+    "input": { "command": "git tag v1.2.3" },
+    "expect": "block"
+  },
+  {
+    "name": "release-read: listing tags passes",
+    "hook": "strict-release-route",
+    "tool": "bash",
+    "input": { "command": "git tag -l" },
+    "expect": "allow"
+  },
+  {
+    "name": "subagent: a task call passes while the session model is not local",
+    "hook": "strict-no-subagents",
+    "tool": "task",
+    "input": {},
+    "expect": "allow"
+  },
+  {
+    "name": "edit-replace: swapping an import the file still uses for another is blocked",
+    "hook": "strict-additive-writes",
+    "tool": "edit",
+    "input": {
+      "path": ".omp/hooks/lib/hook-rule-hint.ts",
+      "input": "PUT 9.=9:\n+import { resolve } from \"node:path\";\n"
+    },
+    "expect": "block"
+  },
+  {
+    "name": "edit-insert: adding an import beside the existing ones passes",
+    "hook": "strict-additive-writes",
+    "tool": "edit",
+    "input": {
+      "path": ".omp/hooks/lib/hook-rule-hint.ts",
+      "input": "PUT >9:\n+import { resolve } from \"node:path\";\n"
+    },
+    "expect": "allow"
+  },
+  {
+    "name": "edit-move: cutting an import into a register and pasting it elsewhere keeps it",
+    "hook": "strict-additive-writes",
+    "tool": "edit",
+    "input": {
+      "path": ".omp/hooks/lib/hook-rule-hint.ts",
+      "input": "CUT 9 @moved\nPUT >10 @moved\n"
+    },
+    "expect": "allow"
+  },
+  {
+    "name": "edit-cut: deleting an import the file still uses is blocked",
+    "hook": "strict-additive-writes",
+    "tool": "edit",
+    "input": {
+      "path": ".omp/hooks/lib/hook-rule-hint.ts",
+      "input": "CUT 9\n"
+    },
+    "expect": "block"
+  },
+  {
+    "name": "mention: a publish command quoted in prose does not run the gate in an eval-free shell",
+    "hook": "strict-verified-git",
+    "tool": "bash",
+    "input": {
+      "command": "echo \"git push is listed\""
+    },
+    "expect": "allow"
+  }
+]

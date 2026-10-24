@@ -5,7 +5,7 @@ import { buildSafeWarning, resetSuppression, wrapWarning } from "../lib/hook-saf
 import { guarded } from "../lib/hook-visibility.ts";
 import { printRuleHint } from "../lib/hook-rule-hint.ts";
 import { MUTATING_TOOLS_NO_BASH as MUTATING_TOOLS } from "../lib/hook-mutating-tools.ts";
-import { resolveProjectRoot } from "../lib/hook-project-root.ts";
+import { projectRoot } from "../lib/hook-project-root.ts";
 
 /**
  * Check-Verify Post Hook
@@ -23,8 +23,6 @@ import { resolveProjectRoot } from "../lib/hook-project-root.ts";
  * `verify`: it runs `verify`, so gating it would recurse. `check-makefiles`
  * holds that exemption to this single target (rule://root-makefile).
  */
-const projectRoot = resolveProjectRoot();
-
 /**
  * Success is cheap to re-confirm later; a failure is not. Holding the same
  * 5-minute silence after a red verify meant the next five minutes of edits got

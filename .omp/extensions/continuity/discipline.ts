@@ -33,6 +33,7 @@
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 // @ts-expect-error — Node builtin, not project-compiled
 import { join, resolve } from "node:path";
+import { projectRoot } from "../../hooks/lib/hook-project-root.ts";
 
 /**
  * A verification that releases the finish gate: any command that covers the
@@ -56,8 +57,8 @@ const NATIVE_DIR = "app/macos/MarshallBluetooth-macOS/Native";
 /** Wiring files whose accumulating lines are watched. */
 const REG_ENTRY_FILES = ["app/App.tsx", "app/index.js"];
 /** Prompt-spanning state: interactive omp starts one process per prompt. */
-const STATE_DIR = ".omp/state";
-const STATE_FILE = `${STATE_DIR}/discipline.json`;
+const STATE_DIR = join(projectRoot, ".omp", "state");
+const STATE_FILE = join(STATE_DIR, "discipline.json");
 /** A shell command that writes a file is a change too (`cat > path <<'EOF'`). */
 const SHELL_WRITE_RE = /(?:>>?|\btee\b\s+(?:-a\s+)?)\s*(["']?)([\w./@-]+\.[A-Za-z0-9]+)\1/g;
 
@@ -98,7 +99,7 @@ export function registerDiscipline(pi: DisciplineApi): void {
   const regWarnCount = new Map<string, number>();
   for (const rel of regFiles) {
     try {
-      const abs = resolve(process.cwd(), rel);
+      const abs = resolve(projectRoot, rel);
       if (existsSync(abs)) regSnapshot.set(rel, wiringLines(readFileSync(abs, "utf-8")));
     } catch { /* an unreadable file is simply not watched */ }
   }
@@ -109,7 +110,7 @@ export function registerDiscipline(pi: DisciplineApi): void {
       const snap = regSnapshot.get(rel);
       if (!snap) continue;
       try {
-        const abs = resolve(process.cwd(), rel);
+        const abs = resolve(projectRoot, rel);
         if (!existsSync(abs)) continue;
         const cur = wiringLines(readFileSync(abs, "utf-8"));
         const dropped = [...snap].filter((l) => !cur.has(l) && !regWarned.has(l));
@@ -236,7 +237,7 @@ export function registerDiscipline(pi: DisciplineApi): void {
 function registrationFiles(): string[] {
   const files = [...REG_ENTRY_FILES];
   try {
-    for (const name of readdirSync(resolve(process.cwd(), NATIVE_DIR))) {
+    for (const name of readdirSync(resolve(projectRoot, NATIVE_DIR))) {
       if (name.endsWith(".m")) files.push(join(NATIVE_DIR, name));
     }
   } catch { /* no native tree yet — nothing to watch there */ }
