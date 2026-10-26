@@ -103,6 +103,22 @@ export function unregisterOthers(keep: string[]): RegisteredCopy[] {
   return dropped;
 }
 
+/** One Roadie process, with the bundle it was started from. */
+export interface RunningApp {
+  pid: number;
+  path: string;
+}
+
+/** The Roadie processes that run, with the bundle each was started from. */
+export function runningApps(): RunningApp[] {
+  const apps: RunningApp[] = [];
+  for (const line of capture("ps", ["-axo", "pid=,command="]).split("\n")) {
+    const match = /^\s*(\d+)\s+(\/.+?\.app)\/Contents\/MacOS\/Roadie(?:\s|$)/.exec(line);
+    if (match !== null) apps.push({ pid: Number(match[1]), path: match[2] });
+  }
+  return apps;
+}
+
 // Direct execution (make run): drop every registered copy but the installed one and the one being launched.
 if (typeof process !== "undefined" && process.argv[1]?.endsWith("app-registry.ts")) {
   const [command, ...keep] = process.argv.slice(2);

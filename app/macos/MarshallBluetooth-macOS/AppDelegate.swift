@@ -8,13 +8,13 @@ import Sparkle
 struct MarshallBluetoothApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
+  /// The window is AppKit's (`AppDelegate.mainWindow`): a SwiftUI `Window` scene
+  /// drops its NSWindow once closed, and a menu bar app must reopen it from the
+  /// menu at any time. SwiftUI only needs a scene; Settings is one that opens
+  /// nothing, and its ⌘, item is removed so it never opens an empty window.
   var body: some Scene {
-    Window("Roadie", id: "main") {
-      ReactNativeView(factory: appDelegate.reactNativeFactory)
-        .frame(minWidth: 560, minHeight: 440)
-    }
-    .defaultSize(width: 680, height: 520)
-    .windowResizability(.contentMinSize)
+    Settings { EmptyView() }
+      .commands { CommandGroup(replacing: .appSettings) {} }
   }
 }
 
@@ -24,6 +24,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   private let reactNativeDelegate: ReactNativeDelegate
   let reactNativeFactory: RCTReactNativeFactory
   private var statusItem: StatusItemController?
+  /// The one window, kept for the app's life: closing hides it, the menu and a
+  /// reopen bring it back with its React Native view and state as they were.
+  private lazy var mainWindow: NSWindow = {
+    let window = NSWindow(
+      contentRect: NSRect(x: 0, y: 0, width: 680, height: 520),
+      styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+    window.title = "Roadie"
+    window.identifier = NSUserInterfaceItemIdentifier(AppDelegate.mainWindowID)
+    window.isReleasedWhenClosed = false
+    // The hosting controller sizes the window to its root view, so the minimum
+    // lives on the view and the opening size is set after it is attached.
+    window.contentViewController = NSHostingController(
+      rootView: ReactNativeView(factory: reactNativeFactory).frame(minWidth: 560, minHeight: 440))
+    window.setContentSize(NSSize(width: 680, height: 520))
+    if !window.setFrameUsingName(AppDelegate.mainWindowID) { window.center() }
+    window.setFrameAutosaveName(AppDelegate.mainWindowID)
+    return window
+  }()
+  static let mainWindowID = "main"
   /// Updates from GitHub Releases: `SUFeedURL` names the appcast `make release`
   /// publishes. A Debug build never starts it, so development runs are not
   /// offered the published version over themselves.
@@ -48,6 +67,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     statusItem = StatusItemController(
       openWindow: { [weak self] in self?.showMainWindow() },
       updateItem: AppDelegate.isDebugBuild ? nil : updateMenuItem())
+    showMainWindow()
   }
 
   /// Every way to ask — the window's button, the menu item — comes here, so the
@@ -89,9 +109,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   private func showMainWindow() {
-    // The SwiftUI `Window` scene keeps its NSWindow after close; ordering it
-    // front reopens it without a second scene instance.
-    NSApp.windows.first { $0.identifier?.rawValue == "main" }?.makeKeyAndOrderFront(nil)
+    NSApp.activate()
+    mainWindow.makeKeyAndOrderFront(nil)
   }
 }
 
@@ -112,7 +131,7 @@ final class UpdatePresenter: NSObject, SPUStandardUserDriverDelegate {
     NSApp.activate()
     // Sparkle opens its window after this call returns.
     DispatchQueue.main.async {
-      for window in NSApp.windows where window.isVisible && window.identifier?.rawValue != "main" {
+      for window in NSApp.windows where window.isVisible && window.identifier?.rawValue != AppDelegate.mainWindowID {
         window.orderFrontRegardless()
       }
     }

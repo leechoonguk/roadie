@@ -77,6 +77,7 @@ project directory.
 | Install | `make install` (app, CocoaPods for macOS), `make desktop-install`, `make ios-pods` |
 | Unit gates while working | `make lint`, `make typecheck`, `make test`, `make swift-check`, `make swift-test`, `make desktop-typecheck` |
 | Run the app as built (Xcode) | `make start` once, then `make run` (fails fast without Metro; drops every other registered copy); `make app-logs` to follow widget → app |
+| The window as a user drives it (menu bar "Open", close, reopen, sizes) | `make app-smoke` (Accessibility; the running copy; needs a GUI session, so not in `verify`) |
 | What this Mac believes about Roadie | `make doctor` — registered copies, the widget host's choice, running processes, signing identity, WWDR G3, `xcode-select`, Metro (read-only, fail-loud) |
 | Windows/Linux app | `make desktop-start`; installers with `make desktop-dist v=x.y.z` (this OS only — CI builds both) |
 | Android APK, iOS build | `make android-apk v=x.y.z` (Android SDK, JDK 17); `make ios-build` (Xcode, simulator) |
@@ -86,7 +87,7 @@ project directory.
 | One harness check | `make check-<name>` (listed by `make help`) |
 | What the harness blocked | `make hook-report` — the pre-hook blocks per hook and the top reasons (`.omp/state/hook-metrics.jsonl`) |
 | The whole gate | `make verify` — runs once, at commit, through `make commit`; run it bare and read the `artifact://` it leaves (or `make verify > /tmp/verify.log 2>&1; echo EXIT=$?`) — never pipe it into `tail`/`grep` |
-| Publish (only when asked) | `make commit m="type(scope): subject"`, `make push` |
+| Publish (only when asked) | `make commit m="type(scope): subject"` (any text: an apostrophe or `$` in the message arrives as typed), `make push` |
 
 ## Measure Before You Claim
 

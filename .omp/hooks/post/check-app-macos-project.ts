@@ -42,6 +42,11 @@
  *      widget registration (the widget host prefers a Release copy's higher
  *      version over the Debug build being developed); `make clean` unregisters
  *      every build copy before deleting it.
+ *   9. A main window the menu can reopen — an `LSUIElement` app opens its window
+ *      from the menu bar item, and SwiftUI drops the NSWindow of a `Window(` or
+ *      `WindowGroup(` scene once it is closed, so "Open Roadie" then opens nothing.
+ *      The app owns an `NSWindow` and keeps it (`isReleasedWhenClosed = false`);
+ *      its scenes are `Settings { EmptyView() }` only.
  *
  * Reads files only. Dormant (cause `absent`) while the project file does not exist.
  */
@@ -95,7 +100,7 @@ export default function checkAppMacosProject(pi: ExtensionAPI): void {
       event.toolName,
       "check-app-macos-project",
       issues,
-      "register sources in their target, sign with a team, keep App Group and names in agreement, build only into app/macos/build/DerivedData.noindex",
+      "register sources in their target, sign with a team, keep App Group and names in agreement, own the main window in AppKit, build only into app/macos/build/DerivedData.noindex",
     );
     if (warning === null) return;
     console.error(warning);
@@ -117,6 +122,7 @@ export function checkAppMacosProjectSync(): string[] {
   issues.push(...checkSigningAndGroups(project));
   issues.push(...checkIdentity(project));
   issues.push(...checkResidencyAndBluetooth(project));
+  issues.push(...checkMainWindow(project));
   issues.push(...checkBuildLocation());
   issues.push(...checkRunAndCleanRecipes());
   return issues;
@@ -351,6 +357,44 @@ function checkRunAndCleanRecipes(): string[] {
   const clean = recipeOf(makefile, "clean");
   if (clean !== null && !clean.includes("app-registry.ts unregister-others")) {
     issues.push("Makefile: `clean` deletes build copies without unregistering them (node .omp/hooks/lib/app-registry.ts unregister-others) — Launch Services keeps listing the deleted Roadie.app");
+  }
+  return issues;
+}
+
+/** Claim 9: a menu bar app's main window is an NSWindow it keeps, not a SwiftUI `Window`/`WindowGroup` scene. */
+function checkMainWindow(project: Project): string[] {
+  const app = project.targets.find((target) => target.productType === APPLICATION);
+  if (app === undefined || app.infoPlist === null) return [];
+  const plist = readProjectFile(app.infoPlist);
+  if (plist === null || !plistTrue(plist, "LSUIElement")) return [];
+
+  const issues: string[] = [];
+  const sources = walk(`${MACOS_DIR}/${app.name}`)
+    .filter((path) => path.endsWith(".swift"))
+    // Comments are dropped first, so a comment that names `Window(` is not a scene.
+    .map((path) => ({ path, code: (readProjectFile(path) ?? "").replace(/\/\*[\s\S]*?\*\/|(^|[^:"])\/\/.*$/gm, "$1") }));
+  for (const { path, code } of sources) {
+    const scene = /(?<![\w.])(Window|WindowGroup)\s*[({]/.exec(code);
+    if (scene !== null) {
+      issues.push(
+        `${path}: ${scene[1]} is a SwiftUI window scene, and SwiftUI drops its NSWindow once the user closes it — the menu bar item's "Open" then opens nothing. ` +
+          "Own an NSWindow in AppDelegate (isReleasedWhenClosed = false) and leave `Settings { EmptyView() }` as the only scene",
+      );
+    }
+  }
+  const owners = sources.filter(({ code }) => /\bNSWindow\s*\(/.test(code));
+  if (owners.length === 0) {
+    issues.push(
+      `${MACOS_DIR}/${app.name}: LSUIElement is set but no source creates an NSWindow — the menu bar item has no main window to open; ` +
+        "own one in AppDelegate with isReleasedWhenClosed = false",
+    );
+  }
+  for (const { path, code } of owners) {
+    if (!/\bisReleasedWhenClosed\s*=\s*false\b/.test(code)) {
+      issues.push(
+        `${path}: creates an NSWindow without isReleasedWhenClosed = false — closing it releases the window, and reopening it from the menu crashes or opens nothing; set it right after creating the window`,
+      );
+    }
   }
   return issues;
 }

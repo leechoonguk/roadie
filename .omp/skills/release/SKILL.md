@@ -73,11 +73,18 @@ with `gh release view <tag>`.
 
 ```bash
 make app-install
+make app-smoke
 make doctor
 ```
 
 `app-install` installs the published disk image into `/Applications` and
 unregisters every build copy, so the widget gallery and Spotlight show one Roadie.
+`make app-smoke` then drives that installed copy through Accessibility — open
+from the menu bar item, close and reopen three times, the opening and the
+minimum size — and every step must print `PASS`. It needs the user's GUI
+session and Accessibility permission for the terminal, and acts on elements,
+never screen coordinates: run it alone, with nothing else clicking in the menu
+bar, and report a missing permission instead of skipping it.
 `make doctor` must report no problems.
 
 ## When It Fails

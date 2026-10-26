@@ -58,6 +58,7 @@ row plus the `make verify` row).
 | `make run` | `node .omp/hooks/lib/app-doctor.ts metro` (Metro on `localhost:8081`; fails with "run `make start` first") + `make build` + `pkill -x Roadie` + `pluginkit -r <Release MarshallWidget.appex>` + `node .omp/hooks/lib/app-registry.ts unregister-others <Debug Roadie.app>` + `pluginkit -a <MarshallWidget.appex>` + `open <Roadie.app>` + `killall chronod` | Build and launch the macOS app with its widget: a menu bar app keeps the old build alive and the widget host caches the old extension until both are replaced; every other registered `Roadie.app` (and its Sparkle updater) and the Release widget are dropped so the widget host cannot prefer them; fails before the slow build when no Metro answers, because Debug loads its JS from Metro (requires Xcode; `rule://app-macos-project`) |
 | `make build` | `xcodebuild -workspace … -scheme MarshallBluetooth-macOS -configuration Debug -derivedDataPath app/macos/build/DerivedData.noindex build` | Build the macOS app and widget extension into the one build location (requires Xcode; `rule://app-macos-project`) |
 | `make app-logs` | `log stream --predicate 'subsystem == "com.uk.marshallbluetooth"'` | Stream the app's and the widget's own log lines — a widget press shows as `widget-intent … queued` then `relay applying …` (`rule://app-macos-project`) |
+| `make app-smoke` | `node .omp/hooks/lib/app-smoke.ts` | Drive the running app's window through Accessibility (System Events, element actions only): open it from the menu bar item, close and reopen it three times, check the opening size and that shrinking stops at the minimum, restore the size it found; prints PASS/FAIL per step and exits 1 on a FAIL, on missing Accessibility permission or when Roadie is not running. Needs a logged-in GUI session, so it is not in `verify` (`rule://app-macos-project`) |
 | `make typecheck` | `cd app && npx tsc --noEmit` | Type-check TypeScript — the app's |
 | `make lint` | `cd app && npx eslint .` | Lint TypeScript — the app's |
 | `make test` | `cd app && npx jest` | Run JS tests — the jest tests |
@@ -77,7 +78,7 @@ row plus the `make verify` row).
 | `make ios-build` | `xcodebuild -workspace app/ios/MarshallBluetooth.xcworkspace -scheme MarshallBluetooth -sdk iphonesimulator -derivedDataPath app/ios/build/DerivedData CODE_SIGNING_ALLOWED=NO build` | Build the iOS app for the simulator, unsigned — the compile gate CI runs. A device build is signed in Xcode with team `X575PLRF8N`; distribution needs the Apple Developer Program, so no iOS build is attached to a release |
 | `make verify` | `lint + typecheck + test + swift-check + swift-test + check-app-duplicate-blocks + check-app-ios-project + check-app-macos-project + check-app-native-boundary + check-app-protocol-parity + check-code-layout + check-makefiles + check-omp-hooks + check-omp-probes + check-omp-rules + check-omp-skills + check-omp-types + check-readme + check-release + check-tooling` | Run every gate that runs without Xcode |
 | `make clean` | `node .omp/hooks/lib/app-registry.ts unregister-others` (every registered build copy), then `rm -rf app/macos/build app/macos/CoreTests/.build app/coverage` + `jest --clearCache` | Remove build output and caches (including a stale `app/macos/build/DerivedData` from before the `.noindex` move); every registered build copy is unregistered first so nothing lists a deleted copy |
-| `make commit` | `git add -A -- .` + `git commit -- .` behind `verify` | Commit this project's verified changes (the worktree) — `m="type(scope): subject"`; the gate is a prerequisite, so the tree that is committed is the tree that passed |
+| `make commit` | `git add -A -- .` + `git commit -q -m "$$COMMIT_MESSAGE" -- .` behind `verify` | Commit this project's verified changes — `m="type(scope): subject"`; the gate is a prerequisite, so the tree that is committed is the tree that passed. The message reaches the shell through the environment (`commit: export COMMIT_MESSAGE = $(value m)`), never inside the recipe's quotes and never expanded by make, so an apostrophe, a double quote, `$` or a backtick in `m` arrives as typed |
 | `make push` | `git push origin <current branch>` behind `verify` | Push the current branch after the gate passes again, because the worktree may have moved since the commit |
 | `make dist` | `node .omp/hooks/lib/app-release.ts dist $(v)` | Build Release with version `v`, check the bundle, pack it into `Roadie-<v>-macos.dmg` (the app beside an Applications link) and Sparkle-sign it, write `appcast.xml` + `checksums.txt` into `app/macos/build/dist` — publishes nothing (`rule://release`; requires Xcode) |
 | `make release` | `node .omp/hooks/lib/app-release.ts release $(bump)` behind `verify` | Tag the next version, build and sign it, publish the GitHub release, read the feed back — only when the user asks; refuses a repository that is not public before anything is tagged (installed copies download anonymously); `DRY_RUN=1` runs the preflight only (`rule://release`) |
@@ -87,7 +88,7 @@ row plus the `make verify` row).
 | `make doctor` | `node .omp/hooks/lib/app-doctor.ts` | Report this Mac's registered Roadie copies and, read-only, their path and version, the widget registration pluginkit chose, the running Roadie processes, the signing identity against the pbxproj team, the WWDR G3 intermediate, `xcode-select` and whether Metro answers; every read is fail-loud (an unreadable registry is a problem, never "none registered"); exits 1 when an extra copy is registered, the widget points elsewhere than the app that runs, or the environment cannot sign (`rule://app-macos-project`) |
 | `make check-app-duplicate-blocks` | `node .omp/hooks/post/check-app-duplicate-blocks.ts` | Check `app/` sources for duplicated block runs (`rule://app-duplicate-blocks`) |
 | `make check-app-ios-project` | `node .omp/hooks/post/check-app-ios-project.ts` | Check the iOS Xcode project — the macOS sources compiled into both iOS targets, one `group.` App Group, widget presses in the app's process, Bluetooth from the background, the widget embedded, the macOS team (`rule://app-ios-project`) |
-| `make check-app-macos-project` | `node .omp/hooks/post/check-app-macos-project.ts` | Check the Xcode project — target membership, team signing, App Group, names, menu bar residency, the one build location, `make run`/`make clean` keeping one registered copy (`rule://app-macos-project`) |
+| `make check-app-macos-project` | `node .omp/hooks/post/check-app-macos-project.ts` | Check the Xcode project — target membership, team signing, App Group, names, menu bar residency, the AppKit-owned main window (no SwiftUI `Window`/`WindowGroup` scene, `isReleasedWhenClosed = false`), the one build location, `make run`/`make clean` keeping one registered copy (`rule://app-macos-project`) |
 | `make check-app-native-boundary` | `node .omp/hooks/post/check-app-native-boundary.ts` | Check the React Native ↔ Swift boundary, including that the widget draws no AppKit-backed control (`rule://app-native-boundary`) |
 | `make check-app-protocol-parity` | `node .omp/hooks/post/check-app-protocol-parity.ts` | Check that Swift and TypeScript agree on the GATT UUIDs, the EQ and volume scales, the product-name tokens and the press model (`rule://app-protocol-parity`) |
 | `make check-code-layout` | `node .omp/hooks/post/check-code-layout.ts` | Check code layout — comments, TS file layout, member order, whitespace, no edit flag left in a file, no Bluetooth address literal in code (`rule://code-layout`) |
@@ -114,6 +115,12 @@ out of the React Native adapters — code in an adapter is code only `make build
 compiles — and why `check-app-macos-project` reads the project file instead of
 building it: a source left out of its target is visible without Xcode.
 
+## Targets Outside `verify`
+
+`app-smoke` is deliberately not a prerequisite of `verify`: it needs a logged-in
+GUI session and Accessibility permission, which a gate run from CI or a headless
+shell does not have.
+
 ## Verification Status
 
 - A `make verify` failure is authoritative only when the command's captured exit
@@ -139,6 +146,11 @@ building it: a source left out of its target is visible without Xcode.
   (`check-tooling` rejects it).
 - Run `npx tsc`, `npx eslint`, `npx jest`, `swiftc -typecheck`, `pod install` or
   `xcodebuild` directly — use the target that owns them.
+- Write a user-supplied variable (`$(m)`) inside shell quotes in a recipe: an
+  apostrophe in the text (`m="fix: the hook's …"`) ends the quote and the shell
+  fails with "unexpected EOF". Export it for the target and read it from the
+  environment in double quotes, as `make commit` does
+  (`commit: export COMMIT_MESSAGE = $(value m)`, then `"$$COMMIT_MESSAGE"`).
 - Truncate a gate's output with a pipe (`| tail`, `| grep`): the pipe returns its
   own exit status, so a red gate reads green. Run the target bare and read the
   `artifact://` it leaves, or redirect and read the status separately:

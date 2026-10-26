@@ -1,4 +1,4 @@
-.PHONY: help install pods start run build app-logs typecheck lint test swift-check swift-test ble-probe app-icon demo widget-snapshots verify clean commit push \
+.PHONY: help install pods start run build app-logs app-smoke typecheck lint test swift-check swift-test ble-probe app-icon demo widget-snapshots verify clean commit push \
 	desktop-install desktop-build desktop-start desktop-typecheck desktop-dist android-apk ios-pods ios-build \
 	dist release unrelease app-install doctor hook-report \
 	check-app-duplicate-blocks check-app-ios-project check-app-macos-project check-app-native-boundary check-app-protocol-parity check-code-layout check-makefiles \
@@ -66,6 +66,10 @@ run: ## Build, quit the running app, drop other registered copies, re-register t
 
 app-logs: ## Stream the app's and the widget's own log lines (widget intents, the request relay)
 	log stream --style compact --info --predicate 'subsystem == "com.uk.marshallbluetooth"'
+
+# Needs a logged-in GUI session and Accessibility permission for the terminal, so it is not part of `verify`.
+app-smoke: ## Drive the running app's window through Accessibility: open from the menu bar item, close and reopen three times, check the opening and the minimum size, restore the size
+	node .omp/hooks/lib/app-smoke.ts
 
 typecheck: ## Type-check TypeScript (tsc)
 	cd $(APP) && npx tsc --noEmit
@@ -139,10 +143,13 @@ clean: ## Remove build output and caches (every registered build copy is unregis
 	cd $(APP) && npx jest --clearCache >/dev/null
 
 # Publishing stages the tree `verify` read: the `-- .` pathspec, from the repository root.
+# The message reaches the shell through the environment, never inside quotes and
+# never expanded by make: `m="fix: the hook's $$HOME"` arrives as typed.
+commit: export COMMIT_MESSAGE = $(value m)
 commit: verify ## Commit this project's verified changes (usage: make commit m="type(scope): subject")
-	@test -n '$(m)' || { echo 'usage: make commit m="type(scope): subject"' >&2; exit 2; }
+	@test -n "$$COMMIT_MESSAGE" || { echo 'usage: make commit m="type(scope): subject"' >&2; exit 2; }
 	@git add -A -- .
-	@git commit -q -m '$(m)' -- .
+	@git commit -q -m "$$COMMIT_MESSAGE" -- .
 	@git --no-pager log --oneline -1
 
 push: verify ## Push the current branch after the gate passes

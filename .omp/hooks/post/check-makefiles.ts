@@ -51,6 +51,9 @@ const makefileRules: Array<{ ruleFile: string; makefilePath: string; label: stri
  */
 const GATE_RUNNER = "check-verify";
 
+/** `commit: export COMMIT_MESSAGE = …` — a target-specific variable, not a target's own line. */
+const TARGET_VARIABLE = /^[A-Za-z0-9_-]+:\s*(?:export\s+|override\s+|private\s+)*[A-Za-z_][\w.]*\s*(?:[:+?!]?=|::=)/;
+
 /**
  * 하네스 텍스트가 부르는 `make <target>` 은 실재해야 한다.
  *
@@ -324,13 +327,15 @@ function parseDocumentedVerifyMembers(rule: string): Set<string> | null {
 /**
  * `make help` greps `##` descriptions, so a target without one is invisible: it
  * exists, it is the documented way to do something, and no reader can find it.
+ * A target-specific variable line (`commit: export COMMIT_MESSAGE = …`) sets a
+ * variable for a target defined elsewhere; it is not the target's own line.
  */
 function checkTargetHelp(makefilePath: string, label: string): string[] {
   const issues: string[] = [];
   if (!existsSync(makefilePath)) return issues;
   for (const line of readFileSync(makefilePath, "utf-8").split(/\r?\n/)) {
     const match = /^([A-Za-z0-9_-]+):(?!=)/.exec(line);
-    if (match === null || match[1] === ".PHONY") continue;
+    if (match === null || match[1] === ".PHONY" || TARGET_VARIABLE.test(line)) continue;
     if (!line.includes("##")) {
       issues.push(`${label}: target '${match[1]}' has no '## <description>' — it cannot appear in \`make help\``);
     }

@@ -1,5 +1,5 @@
 ---
-description: Xcode project for the macOS app (Roadie) — every native source in its target, team signing, one App Group, one product name, a menu bar app that outlives its window, Bluetooth declared, one build location, one registered copy, the Mac's environment
+description: Xcode project for the macOS app (Roadie) — every native source in its target, team signing, one App Group, one product name, a menu bar app that outlives its window and reopens it from the menu (AppKit-owned NSWindow), Bluetooth declared, one build location, one registered copy, the Mac's environment
 globs:
       - app/macos/MarshallBluetooth.xcodeproj/project.pbxproj
       - app/macos/MarshallBluetooth-macOS/Info.plist
@@ -61,6 +61,12 @@ through symlinks, never by membership.
 - **A menu bar app outlives its window.** With `LSUIElement` set, the app
   delegate returns `false` from `applicationShouldTerminateAfterLastWindowClosed`
   — the widget's buttons reach the speaker only through the running app.
+- **The main window is the app's own.** With `LSUIElement` set, "Open Roadie" in
+  the menu bar item must reopen the window at any time, so AppDelegate owns an
+  `NSWindow` and keeps it (`isReleasedWhenClosed = false`), and the only SwiftUI
+  scene is `Settings { EmptyView() }`. A `Window(` or `WindowGroup(` scene is
+  dropped by SwiftUI once the user closes it, and the menu then opens nothing —
+  measured on this app, and invisible to the build.
 - **Bluetooth is declared.** The app target imports CoreBluetooth, so its
   Info.plist carries `NSBluetoothAlwaysUsageDescription` and its sandbox holds
   `com.apple.security.device.bluetooth`.
@@ -151,6 +157,17 @@ through symlinks, never by membership.
 - **Never drive the GUI by screen coordinates.** A click by coordinate lands on
   whichever window is there. Use Accessibility element actions, or ask the user
   to click.
+- **`make app-smoke`** drives the running app's window through Accessibility
+  (`lib/app-smoke.ts`): "Open Roadie" from the menu bar item, the close button,
+  and the reopen three times; the opening size (the saved frame, else 680×520
+  content) and that shrinking stops at the minimum (560×440 content); then the
+  size it found is set back. It prints PASS/FAIL per step and fails clearly when
+  Accessibility is not allowed for the terminal or Roadie is not running. It
+  needs a logged-in GUI session, so it is not a `verify` gate: run it after
+  `make app-install` or `make run`, on any change to the window or the menu.
+  The calls are separate `osascript` runs with pauses — one long `tell` block
+  raced the window list — and two GUI drivers at once (another agent clicking
+  its own menu bar item) make windows vanish mid-run: run it alone.
 
 ## Enforcement
 
@@ -158,6 +175,9 @@ through symlinks, never by membership.
 `make verify`) holds every Project Convention by reading the project, plist and
 entitlements files — it builds nothing and contacts no device. It is dormant
 (cause `absent`) while the Xcode project does not exist.
+
+The window's behaviour needs a GUI session, so it is not a `verify` gate:
+`make app-smoke` drives the running app through Accessibility.
 
 ## Never Do These
 
@@ -167,6 +187,8 @@ entitlements files — it builds nothing and contacts no device. It is dormant
 - Rename the app in one of `PRODUCT_NAME` / `CFBundleDisplayName` only
 - Share state between the app and the widget through `UserDefaults(suiteName:)`
 - Let the menu bar app terminate when its window closes
+- Create the main window of an `LSUIElement` app as a SwiftUI `Window`/`WindowGroup`
+  scene, or release its `NSWindow` when closed — the menu cannot reopen it
 - Build with `react-native run-macos`, Xcode's default DerivedData, or an
   `xcodebuild` without `-derivedDataPath` — each leaves another Roadie.app listed
 - Delete a build directory without unregistering its app (`make clean` does both)
